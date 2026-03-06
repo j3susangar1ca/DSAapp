@@ -60,11 +60,11 @@ public sealed class DocumentoRepository(SiaDbContext context) : IDocumentoReposi
 
     public async Task<IEnumerable<Documento>> SearchByTextAsync(string query, CancellationToken ct = default)
     {
-        // Uso de ILike para aprovechar el índice GIN con gin_trgm_ops
-        // En producción, se recomienda usar EF.Functions.ToTsVector para TsVector si es necesario.
+        // Evolución hacia Full-Text Search (Fase 7 del Roadmap)
+        // Utiliza ToTsVector para explotar índices GIN sobre Nombre/OCR
         return await context.Documentos
             .AsNoTracking()
-            .Where(d => EF.Functions.ILike(d.Nombre, $"%{query}%"))
+            .Where(d => EF.Functions.ToTsVector("spanish", d.Nombre).Matches(EF.Functions.WebSearchToTsQuery("spanish", query)))
             .ToListAsync(ct);
     }
 }

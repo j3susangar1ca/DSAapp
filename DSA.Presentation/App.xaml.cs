@@ -13,17 +13,29 @@ using DSA.Infrastructure.AI;
 using Microsoft.Windows.AppNotifications;
 using DSA.Presentation.Services;
 
+using Microsoft.Extensions.Configuration;
+using System.IO;
+
 namespace DSA.Presentation;
 
 public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
+    public IConfiguration Configuration { get; }
 
     // Raíz visual para diálogos (ContentDialog)
     public static Microsoft.UI.Xaml.XamlRoot? MainStackVisualRoot { get; set; }
 
     public App()
     {
+        // Carga jerárquica de configuración (Fase 5 del Roadmap)
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables(); // Prioriza variables de entorno en producción
+
+        Configuration = builder.Build();
+
         this.InitializeComponent();
         
         var serviceCollection = new ServiceCollection();
@@ -43,14 +55,18 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
+        // Inyección de ConnectionString desde el gestor de configuración
+        string connectionString = Configuration.GetConnectionString("PostgreSql")!;
+        
         // 1. Persistencia: PostgreSQL configurado
         services.AddDbContext<SiaDbContext>(options =>
-            options.UseNpgsql("Host=localhost;Database=dsa_db;Username=postgres;Password=tu_password"));
+            options.UseNpgsql(connectionString));
 
         // 2. Repositorios
         services.AddScoped<IDocumentoRepository, DocumentoRepository>();
         
         // 3. Servicios de Aplicación e Infraestructura
+        services.AddSingleton(Configuration); // Registro de IConfiguration
         services.AddSingleton<IScannerService, ScannerService>();
         services.AddSingleton<ISecurityContext, FakeSecurityContext>();
         services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
