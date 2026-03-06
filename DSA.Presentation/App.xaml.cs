@@ -9,6 +9,7 @@ using DSA.Application.Services;
 using DSA.Infrastructure.Persistence;
 using DSA.Infrastructure.Hardware;
 using DSA.Infrastructure.Storage;
+using DSA.Infrastructure.AI;
 using DSA.Presentation.ViewModels;
 
 namespace DSA.Presentation;
@@ -42,6 +43,8 @@ public partial class App : Application
         services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
         services.AddSingleton<AnalyticsService>();
         services.AddSingleton<DigitizationService>();
+        services.AddHttpClient();
+        services.AddSingleton<IIAService, GeminiIAService>();
 
         // 4. ViewModels
         services.AddTransient<MainViewModel>();
