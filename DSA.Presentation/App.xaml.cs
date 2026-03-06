@@ -69,10 +69,11 @@ public partial class App : Application
         services.AddSingleton(Configuration); // Registro de IConfiguration
         services.AddSingleton<IScannerService, ScannerService>();
         services.AddSingleton<ISecurityContext, FakeSecurityContext>();
-        services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
-        services.AddSingleton<AnalyticsService>();
-        services.AddSingleton<DigitizationService>();
         services.AddSingleton<IStorageService, UncStorageService>();
+        services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
+        services.AddScoped<DigitizationService>();
+        services.AddScoped<RelationService>();
+        services.AddSingleton<AnalyticsService>();
         services.AddHttpClient();
         services.AddSingleton<IIAService, GeminiIAService>();
         services.AddSingleton<NativeNotificationService>(); // Servicio nativo de alertas
