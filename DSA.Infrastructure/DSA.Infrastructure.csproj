@@ -23,7 +23,7 @@
   <ItemGroup>
     <Reference Include="Interop.WIA">
       <HintPath>$(USERPROFILE)\.nuget\packages\wiadotnet\1.0.0\lib\net35\Interop.WIA.dll</HintPath>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
     </Reference>
   </ItemGroup>
 </Project>
