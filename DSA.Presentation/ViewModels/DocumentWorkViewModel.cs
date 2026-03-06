@@ -21,6 +21,8 @@ public partial class MetadatosDto : ObservableObject
 public partial class DocumentWorkViewModel : ObservableObject
 {
     private readonly IDocumentWorkflowService _workflowService;
+    private readonly IIAService _iaService; // Motor Gemini/Ollama inyectado
+    private readonly IOCRService _ocrService; // Motor Tesseract inyectado
     private readonly DispatcherQueue _dispatcherQueue;
     private Documento? _documentoActual;
 
@@ -29,9 +31,14 @@ public partial class DocumentWorkViewModel : ObservableObject
     [ObservableProperty] private bool _isLoadingPdf;
     [ObservableProperty] private bool _isAiExtractionComplete;
 
-    public DocumentWorkViewModel(IDocumentWorkflowService workflowService)
+    public DocumentWorkViewModel(
+        IDocumentWorkflowService workflowService,
+        IIAService iaService,
+        IOCRService ocrService)
     {
         _workflowService = workflowService;
+        _iaService = iaService;
+        _ocrService = ocrService;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
     }
 
@@ -43,27 +50,48 @@ public partial class DocumentWorkViewModel : ObservableObject
         IsAiExtractionComplete && 
         (_documentoActual?.IsSellado ?? false);
 
-    public async Task CargarDocumentoAsync(Documento documento)
+    public async Task CargarDocumentoAsync(Documento documento, byte[] rawPdfBytes)
     {
         _documentoActual = documento;
+        
+        // Actualización inicial de UI
         _dispatcherQueue.TryEnqueue(() => 
         {
             IsLoadingPdf = true;
+            IsAiExtractionComplete = false;
             PdfSourceUri = new Uri(documento.PathUNC);
             GuardarMetadatosCommand.NotifyCanExecuteChanged();
         });
 
+        // Procesamiento en hilo de fondo para evitar congelamiento de WinUI 3
         await Task.Run(async () =>
         {
-            await Task.Delay(1500); // TODO: Reemplazar por invocación real a IIAService
-
-            _dispatcherQueue.TryEnqueue(() =>
+            try 
             {
-                Metadatos.Folio = "001-2026";
-                Metadatos.EsUrgente = documento.IsUrgent;
-                IsAiExtractionComplete = true;
-                IsLoadingPdf = false;
-            });
+                // 1. Fase Óptica: Extracción de texto crudo
+                string ocrText = await _ocrService.ExtractTextAsync(rawPdfBytes);
+
+                // 2. Fase Cognitiva: Análisis semántico con Gemini
+                var aiResult = await _iaService.AnalyzeSemanticsAsync(ocrText);
+
+                // 3. Sincronización con UI Thread para mapeo de MetadatosDto
+                _dispatcherQueue.TryEnqueue(() =>
+                {
+                    Metadatos.Folio = aiResult.Folio;
+                    Metadatos.Remitente = aiResult.Remitente;
+                    Metadatos.Asunto = aiResult.Asunto;
+                    Metadatos.EsUrgente = aiResult.Urgente;
+                    
+                    IsAiExtractionComplete = true; // Activa InfoBar visual
+                    IsLoadingPdf = false;
+                    GuardarMetadatosCommand.NotifyCanExecuteChanged(); // Habilita botón Validar
+                });
+            }
+            catch (Exception ex)
+            {
+                _dispatcherQueue.TryEnqueue(() => IsLoadingPdf = false);
+                await MostrarDialogoErrorAsync("Error de Procesamiento", "No se pudo extraer la información: " + ex.Message);
+            }
         });
     }
 
