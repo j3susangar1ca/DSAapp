@@ -266,11 +266,11 @@ namespace DSA.Infrastructure.Hardware
 
         // ─── Helpers WIA ──────────────────────────────────────────────────────
 
-        private static void SetWiaProperty(IProperties properties, int propId, int value)
+        private static void SetWiaProperty(WIA.IProperties properties, int propId, int value)
         {
             try
             {
-                var prop = properties.get_Item(propId.ToString());
+                var prop = properties.get_Item(ref propId);
                 prop.set_Value(value);
             }
             catch (COMException)
