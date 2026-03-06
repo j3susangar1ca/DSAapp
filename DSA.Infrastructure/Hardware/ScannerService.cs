@@ -123,18 +123,23 @@ namespace DSA.Infrastructure.Hardware
                         catch (COMException comEx) when (comEx.ErrorCode == unchecked((int)0x80210003))
                         {
                             // WIA_ERROR_PAPER_JAM
-                            throw new AtascoPapelException(
-                                $"Atasco de papel detectado en la página {pagina}.");
+                            throw new EscanerOperacionException(
+                                $"Atasco de papel detectado en la página {pagina}.",
+                                comEx, opciones?.DispositivoId, comEx.ErrorCode);
                         }
                         catch (COMException comEx) when (comEx.ErrorCode == unchecked((int)0x80210002))
                         {
                             // WIA_ERROR_PAPER_EMPTY — No hay más hojas en el ADF
+                            if (paginas.Count == 0)
+                                throw new AlimentadorVacioException(opciones?.DispositivoId);
                             hasMorePages = false;
                         }
-                        catch (COMException)
+                        catch (COMException comEx)
                         {
-                            // Otros errores WIA — detener captura
-                            hasMorePages = false;
+                            // Otros errores WIA
+                            throw new EscanerOperacionException(
+                                $"Error WIA en página {pagina}: {comEx.Message}",
+                                comEx, opciones?.DispositivoId, comEx.ErrorCode);
                         }
                     }
 
