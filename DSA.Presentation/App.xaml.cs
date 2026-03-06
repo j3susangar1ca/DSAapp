@@ -77,9 +77,19 @@ public partial class App : Application
         services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
         services.AddScoped<DigitizationService>();
         services.AddScoped<RelationService>();
-        services.AddSingleton<AnalyticsService>();
+        services.AddScoped<AnalyticsService>();
         services.AddHttpClient();
-        services.AddSingleton<IIAService, GeminiIAService>();
+        
+        // Registro de IIAService con cliente HTTP tipado o manual vía factory para evitar captive dependencies
+        services.AddSingleton<IIAService>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(nameof(GeminiIAService));
+            var config  = sp.GetRequiredService<IConfiguration>();
+            return new GeminiIAService(client, config);
+        });
+
+        services.AddSingleton<IOCRService, StubOcrService>();
         services.AddSingleton<NativeNotificationService>(); // Servicio nativo de alertas
 
         // 4. ViewModels
