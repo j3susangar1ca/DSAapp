@@ -16,8 +16,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using WIA;
 using DSA.Application.Interfaces;
 using DSA.Application.DTOs;
 
@@ -61,15 +61,20 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                 progress?.Report(new ProgresoEscaneo(0, 1, "Inicializando dispositivo WIA...", 0.0));
 
-                deviceManager = new DeviceManagerClass();
+                // Instanciación dinámica de DeviceManagerClass
+                var managerType = Type.GetTypeFromProgID("WIA.DeviceManager") 
+                    ?? throw new EscanerException("WIA no está registrado correctamente en este sistema.");
+                
+                dynamic deviceManager = Activator.CreateInstance(managerType)!;
 
                 // Buscar el dispositivo solicitado o el primero disponible
                 string? dispositivoId = opciones?.DispositivoId;
-                foreach (DeviceInfo info in deviceManager.DeviceInfos)
+                foreach (dynamic info in deviceManager.DeviceInfos)
                 {
-                    if (info.Type != WiaDeviceType.ScannerDeviceType) continue;
+                    // WiaDeviceType.ScannerDeviceType = 1
+                    if ((int)info.Type != 1) continue;
 
-                    if (dispositivoId == null || info.DeviceID == dispositivoId)
+                    if (dispositivoId == null || (string)info.DeviceID == dispositivoId)
                     {
                         scanner = info.Connect();
                         break;
@@ -109,7 +114,9 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                     try
                     {
-                        var imageFile = (ImageFile)item.Transfer(FormatID.wiaFormatPNG);
+                        // wiaFormatPNG = "{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}"
+                        dynamic imageFile = item.Transfer("{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}");
+                        
                         // get_BinaryData() devuelve object — extraemos de forma segura
                         var rawData = imageFile.FileData.get_BinaryData();
                         byte[] imageBytes = rawData as byte[]
@@ -187,20 +194,24 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
             DeviceManager? dm = null;
             try
             {
-                dm = new DeviceManagerClass();
+                var managerType = Type.GetTypeFromProgID("WIA.DeviceManager");
+                if (managerType == null) { tcs.SetResult([]); return; }
+                
+                dynamic dm = Activator.CreateInstance(managerType)!;
                 List<InfoDispositivo> lista = [];
 
-                foreach (DeviceInfo info in dm.DeviceInfos)
+                foreach (dynamic info in dm.DeviceInfos)
                 {
-                    if (info.Type != WiaDeviceType.ScannerDeviceType) continue;
+                    if ((int)info.Type != 1) continue;
 
                     lista.Add(new InfoDispositivo(
-                        info.DeviceID,
+                        (string)info.DeviceID,
                         info.Properties["Name"]?.get_Value()?.ToString() ?? "Desconocido",
                         info.Properties["Description"]?.get_Value()?.ToString() ?? ""));
                 }
 
                 tcs.SetResult(lista);
+                if (dm != null) Marshal.ReleaseComObject(dm);
             }
             catch (Exception ex)
             {
@@ -233,20 +244,25 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
             DeviceManager? dm = null;
             try
             {
-                dm = new DeviceManagerClass();
+                var managerType = Type.GetTypeFromProgID("WIA.DeviceManager");
+                if (managerType == null) { tcs.SetResult(false); return; }
+                
+                dynamic dm = Activator.CreateInstance(managerType)!;
 
-                foreach (DeviceInfo info in dm.DeviceInfos)
+                foreach (dynamic info in dm.DeviceInfos)
                 {
-                    if (info.Type == WiaDeviceType.ScannerDeviceType && info.DeviceID == deviceId)
+                    if ((int)info.Type == 1 && (string)info.DeviceID == deviceId)
                     {
-                        var dev = info.Connect();
+                        dynamic dev = info.Connect();
                         Marshal.ReleaseComObject(dev);
                         tcs.SetResult(true);
+                        Marshal.ReleaseComObject(dm);
                         return;
                     }
                 }
 
                 tcs.SetResult(false);
+                if (dm != null) Marshal.ReleaseComObject(dm);
             }
             catch (Exception)
             {
