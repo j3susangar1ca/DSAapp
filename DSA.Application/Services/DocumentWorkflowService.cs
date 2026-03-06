@@ -46,4 +46,10 @@ public sealed class DocumentWorkflowService(
 
         await repository.SaveChangesAsync(cancellationToken);
     }
+
+    public async ValueTask ActualizarDocumentoAsync(Documento documento, CancellationToken cancellationToken = default)
+    {
+        repository.Update(documento);
+        await repository.SaveChangesAsync(cancellationToken);
+    }
 }

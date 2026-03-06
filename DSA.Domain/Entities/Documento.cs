@@ -26,7 +26,21 @@ namespace DSA.Domain.Entities
         public bool IsSellado    => (EstadoVector & (1 << 4))  != 0;
         public bool IsIngresado  => (EstadoVector & (1 << 7))  != 0;
         public bool IsClasificado => (EstadoVector & (1 << 9)) != 0;
-        public bool IsUrgent { get; set; }
+        public bool IsRechazado  => (EstadoVector & (1 << 10)) != 0;
+        public bool IsArchivado  => (EstadoVector & (1 << 11)) != 0;
+        public bool IsUrgent { get; private set; }
+
+        public void SetUrgencia(bool urgente)
+        {
+            IsUrgent = urgente;
+        }
+
+        public void ValidarClasificacion()
+        {
+            if (!IsClasificado)
+                throw new DocumentoInvalidoException(
+                    "El documento no tiene taxonomía CADIDO asignada (D[9]=0).");
+        }
 
         public void SetPath(string path)
         {
@@ -60,13 +74,13 @@ namespace DSA.Domain.Entities
             RegistrarTransicion(estadoAnterior, EstadoVector, "Documento archivado definitivamente.");
         }
 
-        public void Rechazar(string motivo)
+        public void Rechazar(string motivo = "Sin motivo especificado")
         {
             // 4 — Llamar a RegistrarTransicion (Rechazar)
             var estadoAnterior = EstadoVector;
             
-            // Lógica de bits de rechazo según tu mapa real (ej. IsRechazado)
-            // EstadoVector |= 1 << X; 
+            // Lógica de bits de rechazo: D[10]
+            EstadoVector |= 1 << 10; 
             
             RegistrarTransicion(estadoAnterior, EstadoVector, $"Documento rechazado. Motivo: {motivo}");
         }
