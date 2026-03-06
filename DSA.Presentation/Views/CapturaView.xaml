@@ -13,19 +13,19 @@
     </Page.Resources>
 
     <StackPanel Spacing="16" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Ellipse Width="48" Height="48" Fill="{x:Bind ViewModel.SlaColorBrush, Mode=OneWay}" 
+        <Ellipse Width="48" Height="48" Fill="CornflowerBlue" 
                  Stroke="DarkGray" StrokeThickness="2" />
         
-        <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" 
+        <TextBlock Text="{x:Bind ViewModel.MensajeEstado, Mode=OneWay}" 
                    Style="{StaticResource SubtitleTextBlockStyle}" 
                    TextAlignment="Center" />
 
-        <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" 
+        <ProgressRing IsActive="{x:Bind ViewModel.EstaEscaneando, Mode=OneWay}" 
                       Width="64" Height="64" Margin="0,20,0,0"/>
 
         <Button Content="Iniciar Captura" 
-                Command="{x:Bind ViewModel.EjecutarCapturaCommand}" 
-                IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource InvertedBoolConverter}}"
+                Command="{x:Bind ViewModel.IniciarDigitalizacionCommand}" 
+                IsEnabled="{x:Bind ViewModel.EstaEscaneando, Mode=OneWay, Converter={StaticResource InvertedBoolConverter}}"
                 Style="{StaticResource AccentButtonStyle}" 
                 HorizontalAlignment="Center" />
     </StackPanel>
