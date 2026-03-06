@@ -290,7 +290,6 @@ public sealed class DigitizationService
         using var pdfDoc    = new PdfADocument(pdfWriter, PdfAConformanceLevel.PDF_A_1B,
             new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccStream));
 
-        pdfDoc.SetXmpMetadata(pdfDoc.GetXmpMetadata(createNew: true));
 
         pdfDoc.GetCatalog().SetLang(new PdfString("es-ES"));
         pdfDoc.GetDocumentInfo().SetTitle(nombre).SetCreator("DSA");
