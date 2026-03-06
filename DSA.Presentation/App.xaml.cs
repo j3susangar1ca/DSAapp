@@ -18,6 +18,9 @@ public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
+    // Raíz visual para diálogos (ContentDialog)
+    public static Microsoft.UI.Xaml.XamlRoot? MainStackVisualRoot { get; set; }
+
     public App()
     {
         this.InitializeComponent();
@@ -57,6 +60,9 @@ public partial class App : Application
     {
         m_window = new MainWindow();
         m_window.Activate();
+        
+        // Captura de la raíz visual para diálogos
+        MainStackVisualRoot = m_window.Content.XamlRoot;
     }
 
     private Window? m_window;
