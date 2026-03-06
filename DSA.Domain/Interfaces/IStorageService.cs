@@ -15,4 +15,6 @@ public interface IStorageService
     ValueTask<bool> FileExistsAsync(string pathUnc, CancellationToken cancellationToken = default);
     
     ValueTask<Stream> GetFileStreamAsync(string pathUnc, CancellationToken cancellationToken = default);
+
+    ValueTask EliminarSiExisteAsync(string pathUnc, CancellationToken cancellationToken = default);
 }
