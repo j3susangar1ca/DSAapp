@@ -101,15 +101,10 @@ namespace DSA.Presentation.ViewModels
             // El callback ActualizarProgresoEnUI siempre se ejecuta en el UI Thread.
             var progress = new Progress<ProgresoDigitalizacion>(ActualizarProgresoEnUI);
 
-            // Construir ruta UNC según taxonomía CADIDO institucional
-            string anio        = DateTime.Now.Year.ToString();
-            string rutaDestino = $@"\\10.2.1.92\FAA_divserv_admvos\Nueva Carpeta\Oficios\{anio}\{documento.Id:N}.pdf";
-
             try
             {
                 var resultado = await _digitizationService.DigitalizarAsync(
                     documentoId:     documento.Id,
-                    rutaDestino:     rutaDestino,
                     opcionesEscaneo: null,        // Usa OpcionesEscaneo.Institucional (300 DPI, ADF, Gris)
                     operador:        "Operador",  // TODO: reemplazar con usuario autenticado real
                     uiProgress:      progress,
@@ -147,7 +142,7 @@ namespace DSA.Presentation.ViewModels
             {
                 _dispatcherQueue.TryEnqueue(() =>
                 {
-                    MensajeEstado = $"✗ Error en fase [{ex.FaseFallida}]: {ex.Message}";
+                    MensajeEstado = $"✗ Error en fase [{ex.Fase}]: {ex.Message}";
                     FaseActual    = "ERROR";
                     Exitoso       = false;
                 });
@@ -205,7 +200,7 @@ namespace DSA.Presentation.ViewModels
         {
             MensajeEstado = p.Mensaje;
             Porcentaje    = p.Porcentaje;
-            FaseActual    = p.FaseActual;
+            FaseActual    = p.Fase;
         }
 
         private void ResetearEstadoUI()
