@@ -1,2 +1,6 @@
 <Solution>
+  <Project Path="DSA.Application/DSA.Application.csproj" />
+  <Project Path="DSA.Domain/DSA.Domain.csproj" />
+  <Project Path="DSA.Infrastructure/DSA.Infrastructure.csproj" />
+  <Project Path="DSA.Presentation/DSA.Presentation.csproj" />
 </Solution>
