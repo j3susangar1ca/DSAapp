@@ -2,24 +2,25 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.UI.Xaml;
 using System;
+using DSA.Domain.Interfaces;
+using DSA.Domain.Entities;
+using DSA.Application.Interfaces;
+using DSA.Application.Services;
+using DSA.Infrastructure.Persistence;
+using DSA.Infrastructure.Hardware;
+using DSA.Infrastructure.Storage;
+using DSA.Presentation.ViewModels;
 
-// Espacios de nombres del proyecto SIA
-using dsApp.Domain.Interfaces;
-using dsApp.Domain.Services;
-// using dsApp.Infrastructure.Data; // Asumiendo el namespace de tu DbContext
-
-namespace dsApp.Presentation;
+namespace DSA.Presentation;
 
 public partial class App : Application
 {
-    // Propiedad estática para acceder al contenedor desde cualquier parte de la app
     public static IServiceProvider Services { get; private set; } = null!;
 
     public App()
     {
         this.InitializeComponent();
         
-        // Inicialización del contenedor de servicios
         var serviceCollection = new ServiceCollection();
         ConfigureServices(serviceCollection);
         
@@ -28,34 +29,34 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        // 1. Persistencia: PostgreSQL con soporte para JSONB y GIN (Optimizado para SIA)
-        /* services.AddDbContext<SiaDbContext>(options =>
-            options.UseNpgsql(
-                "Host=localhost;Database=SIA_DB;Username=admin;Password=secret",
-                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
-            )); 
-        */
+        // 1. Persistencia
+        services.AddDbContext<SiaDbContext>(options =>
+            options.UseInMemoryDatabase("SIA_DB")); 
 
-        // 2. Repositorios e Infraestructura
+        // 2. Repositorios
         services.AddScoped<IDocumentoRepository, DocumentoRepository>();
         
-        // 3. Servicios de Hardware y Procesamiento (Singletons o Scoped)
-        services.AddSingleton<IScannerService, ScannerService>(); // Wrapper TWAIN/WIA
-        services.AddSingleton<IOCRService, TesseractOCRService>();
-        services.AddSingleton<IIAService, OllamaService>(); // Cliente Llama 3 local
-        services.AddSingleton<IStorageService, UncStorageService>(); // Gestión rutas UNC
+        // 3. Servicios
+        services.AddSingleton<IScannerService, ScannerService>();
+        services.AddSingleton<ISecurityContext, FakeSecurityContext>();
+        services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
+        services.AddSingleton<DigitizationService>();
 
-        // 4. ViewModels (Presentación)
+        // 4. ViewModels
         services.AddTransient<MainViewModel>();
         services.AddTransient<CapturaViewModel>();
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        // Resolución de la ventana principal mediante DI
         m_window = new MainWindow();
         m_window.Activate();
     }
 
     private Window? m_window;
+}
+
+public class FakeSecurityContext : ISecurityContext
+{
+    public bool CurrentUserHasRole(string roleName) => true;
 }
