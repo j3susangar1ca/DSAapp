@@ -12,6 +12,7 @@ public interface IDocumentoRepository
     Task<IEnumerable<Documento>> GetAllAsync(CancellationToken cancellationToken = default);
     Task AddAsync(Documento documento, CancellationToken cancellationToken = default);
     void Update(Documento documento);
+    Task UpdateAsync(Documento documento);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
     
     /// <summary>

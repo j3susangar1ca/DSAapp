@@ -26,6 +26,12 @@ public sealed class DocumentoRepository(SiaDbContext context) : IDocumentoReposi
         context.Documentos.Update(documento);
     }
 
+    public async Task UpdateAsync(Documento documento)
+    {
+        Update(documento);
+        await SaveChangesAsync();
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         try 

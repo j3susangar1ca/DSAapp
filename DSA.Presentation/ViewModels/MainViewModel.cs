@@ -35,36 +35,41 @@ public partial class MainViewModel : ObservableObject
         if (IsRefreshing) return;
         
         IsRefreshing = true;
-        BandejaEntrada.Clear();
-
-        var docs = await _repository.GetAllAsync();
-
-        // Lógica de filtrado por Vector de Estado D[11:0]
-        // Filtro: (D[7] == 1) AND (D[11] == 0)
-        var pendientes = docs.Where(d => d.IsIngresado && !d.IsArchivado && !d.IsRechazado);
-
-        foreach (var doc in pendientes)
+        try 
         {
-            BandejaEntrada.Add(doc);
-        }
+            BandejaEntrada.Clear();
+            var docs = await _repository.GetAllAsync();
 
-        IsRefreshing = false;
+            // Filtro de estados no terminales basado en el Vector de Estado
+            // Lógica: !(D[11] ARCH) AND !(D[10] RECH)
+            var activos = docs.Where(d => !d.IsArchivado && !d.IsRechazado);
+
+            foreach (var doc in activos)
+            {
+                BandejaEntrada.Add(doc);
+            }
+        }
+        finally 
+        {
+            IsRefreshing = false;
+        }
     }
 
     /// <summary>
-    /// Lógica de navegación hacia la página de trabajo.
+    /// Comando de Selección de Trámite para navegación.
     /// </summary>
     [RelayCommand]
-    private void NavegarADetalle(Documento documento)
+    private void SeleccionarDocumento(Documento documento)
     {
         if (documento == null) return;
         
-        // En WinUI 3, la navegación se suele orquestar a través de un Frame en MainWindow
-        // Este evento debe ser capturado por la View o un NavigationService
-        OnDocumentoSeleccionadoParaProceso(documento);
+        DocumentoSeleccionado = documento;
+        
+        // Dispara el evento de navegación que debe ser capturado en MainWindow
+        OnNavegacionRequerida(documento);
     }
 
-    // Evento para comunicar la selección a la UI
-    public event Action<Documento>? DocumentoSeleccionadoParaProceso;
-    protected virtual void OnDocumentoSeleccionadoParaProceso(Documento doc) => DocumentoSeleccionadoParaProceso?.Invoke(doc);
+    // Evento para comunicar la intención de navegación a la View/MainWindow
+    public event Action<Documento>? NavegacionRequerida;
+    protected virtual void OnNavegacionRequerida(Documento doc) => NavegacionRequerida?.Invoke(doc);
 }
