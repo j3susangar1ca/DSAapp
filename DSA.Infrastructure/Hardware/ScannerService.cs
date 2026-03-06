@@ -45,9 +45,9 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
         Thread staThread = new(() =>
         {
             List<byte[]> paginas = [];
-            DeviceManager? deviceManager = null;
-            Device? scanner = null;
-            Item? item = null;
+            dynamic? deviceManager = null;
+            dynamic? scanner = null;
+            dynamic? item = null;
 
             try
             {
@@ -56,13 +56,14 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                 progress?.Report(new ProgresoEscaneo(0, 1, "Inicializando dispositivo WIA...", 0.0));
 
-                deviceManager = new DeviceManagerClass();
+                Type wiaType = Type.GetTypeFromProgID("WIA.DeviceManager", true)!;
+                deviceManager = Activator.CreateInstance(wiaType);
 
                 // Buscar el dispositivo solicitado o el primero disponible
                 string? dispositivoId = opciones?.DispositivoId;
-                foreach (DeviceInfo info in deviceManager.DeviceInfos)
+                foreach (dynamic info in deviceManager.DeviceInfos)
                 {
-                    if (info.Type != WiaDeviceType.ScannerDeviceType) continue;
+                    if ((int)info.Type != 1) continue; // WiaDeviceType.ScannerDeviceType is 1
 
                     if (dispositivoId == null || info.DeviceID == dispositivoId)
                     {
@@ -81,9 +82,9 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                 // Configurar propiedades WIA (Se inyecta cast a WIA.Properties)
                 var opts = opciones ?? OpcionesEscaneo.Institucional;
-                SetWiaProperty((WIA.Properties)item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
-                SetWiaProperty((WIA.Properties)item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
-                SetWiaProperty((WIA.Properties)item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
+                SetWiaProperty(item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
+                SetWiaProperty(item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
+                SetWiaProperty(item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
 
                 _logger.LogDebug(
                     "WIA configurado: DPI={Dpi} Modo={Modo} Documento={Id}",
@@ -104,7 +105,7 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                     try
                     {
-                        var imageFile = (ImageFile)item.Transfer(FormatID.wiaFormatPNG);
+                        dynamic imageFile = item.Transfer("{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}"); // wiaFormatPNG
                         byte[] imageBytes = (byte[])imageFile.FileData.get_BinaryData();
                         paginas.Add(imageBytes);
 
@@ -173,15 +174,16 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         Thread staThread = new(() =>
         {
-            DeviceManager? dm = null;
+            dynamic? dm = null;
             try
             {
-                dm = new DeviceManagerClass();
+                Type wiaType = Type.GetTypeFromProgID("WIA.DeviceManager", true)!;
+                dm = Activator.CreateInstance(wiaType);
                 List<InfoDispositivo> lista = [];
 
-                foreach (DeviceInfo info in dm.DeviceInfos)
+                foreach (dynamic info in dm.DeviceInfos)
                 {
-                    if (info.Type != WiaDeviceType.ScannerDeviceType) continue;
+                    if ((int)info.Type != 1) continue; // WiaDeviceType.ScannerDeviceType is 1
 
                     lista.Add(new InfoDispositivo(
                         info.DeviceID,
@@ -218,14 +220,15 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         Thread staThread = new(() =>
         {
-            DeviceManager? dm = null;
+            dynamic? dm = null;
             try
             {
-                dm = new DeviceManagerClass();
+                Type wiaType = Type.GetTypeFromProgID("WIA.DeviceManager", true)!;
+                dm = Activator.CreateInstance(wiaType);
 
-                foreach (DeviceInfo info in dm.DeviceInfos)
+                foreach (dynamic info in dm.DeviceInfos)
                 {
-                    if (info.Type == WiaDeviceType.ScannerDeviceType && info.DeviceID == deviceId)
+                    if ((int)info.Type == 1 && info.DeviceID == deviceId) // 1 = ScannerDeviceType
                     {
                         var dev = info.Connect();
                         Marshal.ReleaseComObject(dev);
@@ -255,7 +258,7 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
     // ─── Helpers WIA ──────────────────────────────────────────────────────
 
-    private static void SetWiaProperty(WIA.Properties properties, int propId, int value)
+    private static void SetWiaProperty(dynamic properties, int propId, int value)
     {
         try
         {
