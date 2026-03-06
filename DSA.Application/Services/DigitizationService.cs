@@ -284,17 +284,13 @@ public sealed class DigitizationService
         using var iccStream = ObtenerPerfilIcc();
 
         var writerProperties = new WriterProperties()
-            .SetFullCompression()
             .SetCompressionLevel(CompressionConstants.BEST_COMPRESSION);
 
         using var pdfWriter = new PdfWriter(outputStream, writerProperties);
         using var pdfDoc    = new PdfADocument(pdfWriter, PdfAConformanceLevel.PDF_A_1B,
             new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccStream));
 
-        var xmpMeta = pdfDoc.GetXmpMetadata(createNew: true);
-        xmpMeta.SetProperty(iText.Kernel.XMP.XMPConst.NS_DC, "title", nombre);
-        xmpMeta.SetProperty(iText.Kernel.XMP.XMPConst.NS_DC, "creator", "DSA");
-        pdfDoc.SetXmpMetadata(xmpMeta);
+        pdfDoc.SetXmpMetadata(pdfDoc.GetXmpMetadata(createNew: true));
 
         pdfDoc.GetCatalog().SetLang(new PdfString("es-ES"));
         pdfDoc.GetDocumentInfo().SetTitle(nombre).SetCreator("DSA");
@@ -322,7 +318,7 @@ public sealed class DigitizationService
 
         if (resourceName != null) return assembly.GetManifestResourceStream(resourceName)!;
         
-        var iccPath = Path.Combine(AppContext.BaseDirectory, "Resources", "sRGB_v4_ICC_preference.icc");
+        var iccPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Resources", "sRGB_v4_ICC_preference.icc");
         if (File.Exists(iccPath)) return File.OpenRead(iccPath);
 
         return new MemoryStream(Array.Empty<byte>());

@@ -23,7 +23,9 @@ namespace DSA.Domain.Entities
             // Configuración inicial de tu vector (ej. INGR D[7])
         }
 
-        public bool IsSellado => (EstadoVector & (1 << 4)) != 0;
+        public bool IsSellado    => (EstadoVector & (1 << 4))  != 0;
+        public bool IsIngresado  => (EstadoVector & (1 << 7))  != 0;
+        public bool IsClasificado => (EstadoVector & (1 << 9)) != 0;
 
         public void SetPath(string path)
         {
@@ -66,6 +68,17 @@ namespace DSA.Domain.Entities
             // EstadoVector |= 1 << X; 
             
             RegistrarTransicion(estadoAnterior, EstadoVector, $"Documento rechazado. Motivo: {motivo}");
+        }
+
+        /// <summary>
+        /// Registra una relación lógica con otro documento.
+        /// </summary>
+        public void AgregarRelacion(Guid documentoRelacionadoId, string tipoRelacion)
+        {
+            // TODO: Implementar colección de relaciones cuando se defina la entidad Relacion
+            var estadoAnterior = EstadoVector;
+            RegistrarTransicion(estadoAnterior, EstadoVector,
+                $"Relación '{tipoRelacion}' con documento {documentoRelacionadoId} registrada.");
         }
 
         // 3 — El método RegistrarTransicion
