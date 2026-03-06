@@ -6,20 +6,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using DSA.Application.DTOs;
 
-/// <summary>
-/// Abstracción para la integración de bajo nivel con hardware TWAIN/WIA.
-/// </summary>
-public interface IScannerService
+public interface IScannerService : IDisposable
 {
+    /// <summary>Indica si el dispositivo está actualmente en uso.</summary>
     bool IsDeviceBusy { get; }
 
-    /// <summary>
-    /// Captura una o más imágenes desde el hardware de escaneo.
-    /// Retorna una lista de arreglos de bytes (una entrada por página escaneada).
-    /// </summary>
-    Task<List<byte[]>> CaptureAsync(
-        Guid                          documentoId,
-        OpcionesEscaneo?              opciones  = null,
-        IProgress<ProgresoEscaneo>?   progress  = null,
-        CancellationToken             ct        = default);
+    /// <summary>Captura múltiples páginas desde el ADF o Cama Plana.</summary>
+    Task<IReadOnlyList<byte[]>> CaptureAsync(
+        Guid documentoId,
+        OpcionesEscaneo? opciones = null,
+        IProgress<ProgresoEscaneo>? progress = null,
+        CancellationToken ct = default);
+
+    /// <summary>Devuelve la lista de escáneres disponibles en el sistema.</summary>
+    Task<IReadOnlyList<InfoDispositivo>> ObtenerDispositivosAsync(CancellationToken ct = default);
+
+    /// <summary>Verifica si un dispositivo específico está conectado y listo.</summary>
+    Task<bool> VerificarDispositivoAsync(string deviceId, CancellationToken ct = default);
 }
