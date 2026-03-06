@@ -81,9 +81,9 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                 // Configurar propiedades WIA (Se inyecta cast a WIA.Properties)
                 var opts = opciones ?? OpcionesEscaneo.Institucional;
-                SetWiaProperty((WIA.Properties)item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
-                SetWiaProperty((WIA.Properties)item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
-                SetWiaProperty((WIA.Properties)item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
+                SetWiaProperty(item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
+                SetWiaProperty(item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
+                SetWiaProperty(item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
 
                 _logger.LogDebug(
                     "WIA configurado: DPI={Dpi} Modo={Modo} Documento={Id}",
@@ -255,7 +255,7 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
     // ─── Helpers WIA ──────────────────────────────────────────────────────
 
-    private static void SetWiaProperty(WIA.Properties properties, int propId, int value)
+    private static void SetWiaProperty(dynamic properties, int propId, int value)
     {
         try
         {
