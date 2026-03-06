@@ -58,7 +58,11 @@
                     <Button Content="Validar y Guardar" 
                             Command="{x:Bind ViewModel.GuardarMetadatosCommand}" 
                             Style="{StaticResource AccentButtonStyle}" 
-                            HorizontalAlignment="Stretch" />
+                            HorizontalAlignment="Stretch">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Content="Requiere que la extracción de IA y el Sello SHA-256 estén completados." />
+                        </ToolTipService.ToolTip>
+                    </Button>
                     
                     <Button Content="Rechazar" 
                             Command="{x:Bind ViewModel.RechazarDocumentoCommand}" 
