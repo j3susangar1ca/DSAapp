@@ -22,9 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Interop.WIA">
-      <HintPath>$(USERPROFILE)\.nuget\packages\wiadotnet\1.0.0\lib\net35\Interop.WIA.dll</HintPath>
-      <EmbedInteropTypes>false</EmbedInteropTypes>
-    </Reference>
+    <PackageReference Include="wiadotnet" Version="1.0.0" />
   </ItemGroup>
 </Project>
