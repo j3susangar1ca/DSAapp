@@ -46,6 +46,7 @@ public partial class App : Application
         services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
         services.AddSingleton<AnalyticsService>();
         services.AddSingleton<DigitizationService>();
+        services.AddSingleton<IStorageService, UncStorageService>();
         services.AddHttpClient();
         services.AddSingleton<IIAService, GeminiIAService>();
 
