@@ -58,9 +58,13 @@ public partial class App : Application
         // Inyección de ConnectionString desde el gestor de configuración
         string connectionString = Configuration.GetConnectionString("PostgreSql")!;
         
-        // 1. Persistencia: PostgreSQL configurado
-        services.AddDbContext<SiaDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        // 1. Persistencia: PostgreSQL configurado con Pooling
+        services.AddDbContextPool<SiaDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                // Optimización y configuración asíncrona por defecto permitiendo pooling
+                npgsqlOptions.EnableRetryOnFailure(3);
+            }));
 
         // 2. Repositorios
         services.AddScoped<IDocumentoRepository, DocumentoRepository>();

@@ -50,6 +50,11 @@ public sealed class RelationService(
 
     private async ValueTask ValidarIntegridadFisicaAsync(Documento doc, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(doc.PathUNC))
+        {
+            throw new InvalidDataException($"Falta de Integridad: El documento {doc.Id} carece de ruta física (PathUNC nulo o vacío).");
+        }
+
         // 3.1 Verificación de existencia en ruta UNC protegida
         if (!await storageService.FileExistsAsync(doc.PathUNC, cancellationToken))
         {
