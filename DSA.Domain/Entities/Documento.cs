@@ -26,6 +26,7 @@ namespace DSA.Domain.Entities
         public bool IsSellado    => (EstadoVector & (1 << 4))  != 0;
         public bool IsIngresado  => (EstadoVector & (1 << 7))  != 0;
         public bool IsClasificado => (EstadoVector & (1 << 9)) != 0;
+        public bool IsUrgent { get; set; }
 
         public void SetPath(string path)
         {
