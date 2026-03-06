@@ -19,10 +19,13 @@ public sealed class GeminiIAService : IIAService
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
         // Lectura segura desde IConfiguration (appsettings.json → variables de entorno)
-        _apiKey = configuration["AiSettings:GeminiApiKey"]
-            ?? throw new InvalidOperationException(
-                "CONFIGURACIÓN FALTANTE: La clave 'AiSettings:GeminiApiKey' no fue encontrada. " +
-                "Defínala en appsettings.json o como variable de entorno 'AiSettings__GeminiApiKey'.");
+        _apiKey = configuration["AiSettings:GeminiApiKey"] ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(_apiKey) || _apiKey.StartsWith("REEMPLAZAR"))
+        {
+            // No lanzar en constructor — el error se manejará en AnalyzeSemanticsAsync
+            _apiKey = string.Empty;
+        }
 
         _endpoint = configuration["AiSettings:GeminiEndpoint"]
             ?? "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";

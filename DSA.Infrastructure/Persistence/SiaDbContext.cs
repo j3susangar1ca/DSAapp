@@ -29,10 +29,10 @@ public class SiaDbContext(DbContextOptions<SiaDbContext> options) : DbContext(op
 
             // Indexación GIN para Full-Text Search en Postgres (Fase 7 del Roadmap)
             // Requiere extensión pg_trgm en PostgreSQL y paquete Npgsql.EntityFrameworkCore.PostgreSQL
-            entity.HasIndex(d => d.Nombre)
-                  .HasDatabaseName("IX_Documento_Nombre_GIN")
-                  .HasMethod("gin")
-                  .HasOperators("gin_trgm_ops"); 
+            // entity.HasIndex(d => d.Nombre)
+            //       .HasDatabaseName("IX_Documento_Nombre_GIN")
+            //       .HasMethod("gin")
+            //       .HasOperators("gin_trgm_ops"); 
         });
     }
 }
