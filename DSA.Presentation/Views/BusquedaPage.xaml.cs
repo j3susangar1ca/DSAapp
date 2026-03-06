@@ -13,4 +13,12 @@ public sealed partial class BusquedaPage : Page
         this.InitializeComponent();
         ViewModel = App.Services.GetRequiredService<BusquedaViewModel>();
     }
+
+    private void OnQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        if (ViewModel.BuscarDocumentosCommand.CanExecute(null))
+        {
+            ViewModel.BuscarDocumentosCommand.Execute(null);
+        }
+    }
 }
