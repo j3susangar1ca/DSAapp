@@ -1,0 +1,44 @@
+<Page
+    x:Class="DSA.Presentation.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid Padding="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Monitor de Desempeño Operativo (SLA)" Style="{StaticResource HeaderTextBlockStyle}" Margin="0,0,0,24"/>
+
+        <Grid Grid.Row="1" ColumnSpacing="24" RowSpacing="24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="350" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
+                    Padding="20" CornerRadius="8" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Carga de Trabajo por Mesa (D[8])" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,16"/>
+                    <lvc:CartesianChart Series="{x:Bind ViewModel.Series, Mode=OneWay}" Height="400" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="20" CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Estado General del Sistema" HorizontalAlignment="Center" />
+                        <Ellipse Width="100" Height="100" Fill="{x:Bind ViewModel.SystemHealthColor, Mode=OneWay}" />
+                        <TextBlock Text="{x:Bind ViewModel.HealthMessage, Mode=OneWay}" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                
+                <InfoBar Title="Alerta de Balanceo" Message="La Mesa 3 excede el límite de SLA (>2 docs de diferencia)." 
+                         IsOpen="{x:Bind ViewModel.HasAlert, Mode=OneWay}" Severity="Warning" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

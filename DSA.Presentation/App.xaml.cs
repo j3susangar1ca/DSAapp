@@ -40,12 +40,14 @@ public partial class App : Application
         services.AddSingleton<IScannerService, ScannerService>();
         services.AddSingleton<ISecurityContext, FakeSecurityContext>();
         services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
+        services.AddSingleton<AnalyticsService>();
         services.AddSingleton<DigitizationService>();
 
         // 4. ViewModels
         services.AddTransient<MainViewModel>();
         services.AddTransient<CapturaViewModel>();
         services.AddTransient<DocumentWorkViewModel>();
+        services.AddTransient<DashboardViewModel>();
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
