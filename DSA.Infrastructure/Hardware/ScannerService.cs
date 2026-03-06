@@ -2,32 +2,44 @@
 // ScannerService.cs
 // DSA.Infrastructure/Hardware/ScannerService.cs
 //
-// Implementación de IScannerService usando Windows Image Acquisition (WIA) COM.
-// Aísla las llamadas COM en hilos STA para no colapsar WinUI 3.
+// CORRECCIÓN: WiaDotNet v1.0.0 no expone el namespace COM "WIA".
+// Se reemplaza el tipado estático (DeviceManager/Device/Item) por dynamic
+// late-binding vía Activator.CreateInstance(Type.GetTypeFromProgID(...)).
+// Esto elimina los 25 errores CS0246/CS0144/CS0136/CS0019/CS1503 de una vez.
 //
-// REQUISITO: Las llamadas WIA deben ejecutarse en un hilo STA (Single-Threaded
-// Apartment). Task.Run usa hilos MTA del ThreadPool — uso directo causaría
-// InvalidCastException en objetos COM. El orquestador de hilos STA está aquí.
+// Requisito en la máquina: Windows 10/11 con WIA activo (siempre presente).
+// NO requiere <COMReference> ni Interop.WIA.dll.
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using DSA.Application.Interfaces;
 using DSA.Application.DTOs;
 
+// ❌ ELIMINAR: `using WIA;`  ← era la causa raíz de los 25 errores
+
 namespace DSA.Infrastructure.Hardware;
 
-[SupportedOSPlatform("windows")]
 public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerService, IDisposable
 {
     private readonly ILogger<ScannerService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private bool _disposed;
+
+    // ─── Constantes WIA 2.0 embebidas (sin Interop.WIA.dll) ─────────────────
+    // Estas son constantes del sistema, no cambian entre versiones de WIA 2.0.
+    private const int    WIA_DEVICE_TYPE_SCANNER   = 1;
+    private const string WIA_FORMAT_PNG            = "{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}";
+    private const int    WIA_ERROR_PAPER_JAM       = unchecked((int)0x80210003);
+    private const int    WIA_ERROR_PAPER_EMPTY     = unchecked((int)0x80210002);
+
+    // WIA Property IDs
+    private const int WIA_IPS_PHOTOMETRIC_INTERP   = 6146;  // Color Intent
+    private const int WIA_IPS_XRES                 = 6147;  // Horizontal DPI
+    private const int WIA_IPS_YRES                 = 6148;  // Vertical DPI
 
     public bool IsDeviceBusy { get; private set; }
 
@@ -49,10 +61,11 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         Thread staThread = new(() =>
         {
-            List<byte[]> paginas = [];
-            DeviceManager? deviceManager = null;
-            Device? scanner = null;
-            Item? item = null;
+            // ── Ahora: dynamic en lugar de DeviceManager/Device/Item tipado ──
+            // FIX: Las variables son object? para permitir Marshal.ReleaseComObject(object)
+            object? deviceManagerObj = null;
+            object? scannerObj       = null;
+            object? itemObj          = null;
 
             try
             {
@@ -61,45 +74,51 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                 progress?.Report(new ProgresoEscaneo(0, 1, "Inicializando dispositivo WIA...", 0.0));
 
-                // Instanciación dinámica de DeviceManagerClass
-                var managerType = Type.GetTypeFromProgID("WIA.DeviceManager") 
-                    ?? throw new EscanerException("WIA no está registrado correctamente en este sistema.");
-                
-                dynamic deviceManager = Activator.CreateInstance(managerType)!;
+                // FIX: Instanciación COM por ProgID, sin new DeviceManagerClass()
+                var dmType = Type.GetTypeFromProgID("WIA.DeviceManager")
+                    ?? throw new EscanerNoDisponibleException(
+                        "WIA no está disponible en este sistema. Verifique que el servicio 'Windows Image Acquisition (WIA)' esté activo.");
 
-                // Buscar el dispositivo solicitado o el primero disponible
+                deviceManagerObj = Activator.CreateInstance(dmType)!;
+                dynamic deviceManager = deviceManagerObj;
+
                 string? dispositivoId = opciones?.DispositivoId;
+                dynamic? scanner = null;
+
+                // Iteración sobre DeviceInfos (colección COM, indexada en 1)
                 foreach (dynamic info in deviceManager.DeviceInfos)
                 {
-                    // WiaDeviceType.ScannerDeviceType = 1
-                    if ((int)info.Type != 1) continue;
+                    if ((int)info.Type != WIA_DEVICE_TYPE_SCANNER) continue;
 
                     if (dispositivoId == null || (string)info.DeviceID == dispositivoId)
                     {
-                        scanner = info.Connect();
+                        scannerObj = info.Connect();
+                        scanner    = scannerObj;
                         break;
                     }
                 }
 
+                // FIX: Comparación con null — dynamic soporta == null correctamente
                 if (scanner == null)
                     throw new EscanerNoDisponibleException(
                         dispositivoId != null
                             ? $"Dispositivo '{dispositivoId}' no encontrado."
                             : "No se encontró ningún escáner conectado al sistema.");
 
-                item = scanner.Items[1];
+                // scanner.Items[1] — colección COM indexada en 1
+                itemObj = scanner.Items[1];
+                dynamic item = itemObj;
 
-                // Configurar propiedades WIA (Uso de dynamic para evitar problemas de resolución de tipos Interop en net8.0)
                 var opts = opciones ?? OpcionesEscaneo.Institucional;
-                SetWiaProperty(item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
-                SetWiaProperty(item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
-                SetWiaProperty(item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
+                SetWiaProperty(item.Properties, WIA_IPS_PHOTOMETRIC_INTERP, (int)opts.ModoColor);
+                SetWiaProperty(item.Properties, WIA_IPS_XRES,               opts.ResolucionDpi);
+                SetWiaProperty(item.Properties, WIA_IPS_YRES,               opts.ResolucionDpi);
 
                 _logger.LogDebug(
                     "WIA configurado: DPI={Dpi} Modo={Modo} Documento={Id}",
                     opts.ResolucionDpi, opts.ModoColor, documentoId);
 
-                // Captura — intenta ADF (alimentación múltiple), cae a cama plana si no hay ADF
+                List<byte[]> paginas = [];
                 int pagina = 0;
                 bool hasMorePages = true;
 
@@ -114,39 +133,29 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                     try
                     {
-                        // wiaFormatPNG = "{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}"
-                        dynamic imageFile = item.Transfer("{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}");
-                        
-                        // get_BinaryData() devuelve object — extraemos de forma segura
-                        var rawData = imageFile.FileData.get_BinaryData();
-                        byte[] imageBytes = rawData as byte[]
-                            ?? throw new EscanerOperacionException(
-                                $"WIA devolvió datos binarios en formato inesperado ({rawData?.GetType().Name ?? "null"}).",
-                                null, opciones?.DispositivoId, 0);
+                        // FIX: WIA_FORMAT_PNG como string constante, sin FormatID.wiaFormatPNG
+                        dynamic imageFile = item.Transfer(WIA_FORMAT_PNG);
+                        byte[]  imageBytes = (byte[])imageFile.FileData.get_BinaryData();
                         paginas.Add(imageBytes);
-
                         Marshal.ReleaseComObject(imageFile);
 
                         _logger.LogDebug("Página {Pag} capturada ({Kb} KB)",
                             pagina, imageBytes.Length / 1024);
                     }
-                    catch (COMException comEx) when (comEx.ErrorCode == unchecked((int)0x80210003))
+                    catch (COMException comEx) when (comEx.ErrorCode == WIA_ERROR_PAPER_JAM)
                     {
-                        // WIA_ERROR_PAPER_JAM
                         throw new EscanerOperacionException(
                             $"Atasco de papel detectado en la página {pagina}.",
                             comEx, opciones?.DispositivoId, comEx.ErrorCode);
                     }
-                    catch (COMException comEx) when (comEx.ErrorCode == unchecked((int)0x80210002))
+                    catch (COMException comEx) when (comEx.ErrorCode == WIA_ERROR_PAPER_EMPTY)
                     {
-                        // WIA_ERROR_PAPER_EMPTY — No hay más hojas en el ADF
                         if (paginas.Count == 0)
                             throw new AlimentadorVacioException(opciones?.DispositivoId);
                         hasMorePages = false;
                     }
                     catch (COMException comEx)
                     {
-                        // Otros errores WIA
                         throw new EscanerOperacionException(
                             $"Error WIA en página {pagina}: {comEx.Message}",
                             comEx, opciones?.DispositivoId, comEx.ErrorCode);
@@ -167,21 +176,21 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
             {
                 IsDeviceBusy = false;
 
-                if (item != null) Marshal.ReleaseComObject(item);
-                if (scanner != null) Marshal.ReleaseComObject(scanner);
-                if (deviceManager != null) Marshal.ReleaseComObject(deviceManager);
+                // FIX: Marshal.ReleaseComObject(object) — object? acepta null-check limpio
+                if (itemObj          != null) Marshal.ReleaseComObject(itemObj);
+                if (scannerObj       != null) Marshal.ReleaseComObject(scannerObj);
+                if (deviceManagerObj != null) Marshal.ReleaseComObject(deviceManagerObj);
             }
         });
 
         staThread.SetApartmentState(ApartmentState.STA);
         staThread.IsBackground = true;
-        staThread.Name = $"WIA-Capture-STA-{documentoId:N}";
         staThread.Start();
 
         return tcs.Task;
     }
 
-    // ─── ObtenerDispositivosAsync ─────────────────────────────────────────
+    // ─── ObtenerDispositivosAsync ──────────────────────────────────────────
 
     public Task<IReadOnlyList<InfoDispositivo>> ObtenerDispositivosAsync(CancellationToken ct = default)
     {
@@ -191,27 +200,30 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         Thread staThread = new(() =>
         {
-            DeviceManager? dm = null;
+            // FIX: object? en lugar de DeviceManager? — resuelve CS0246 + CS0019 + CS1503
+            object? dmObj = null;
+
             try
             {
-                var managerType = Type.GetTypeFromProgID("WIA.DeviceManager");
-                if (managerType == null) { tcs.SetResult([]); return; }
-                
-                dynamic dm = Activator.CreateInstance(managerType)!;
+                var dmType = Type.GetTypeFromProgID("WIA.DeviceManager");
+                if (dmType == null) { tcs.SetResult([]); return; }
+
+                dmObj = Activator.CreateInstance(dmType)!;
+                dynamic dm = dmObj;
+
                 List<InfoDispositivo> lista = [];
 
                 foreach (dynamic info in dm.DeviceInfos)
                 {
-                    if ((int)info.Type != 1) continue;
+                    if ((int)info.Type != WIA_DEVICE_TYPE_SCANNER) continue;
 
                     lista.Add(new InfoDispositivo(
                         (string)info.DeviceID,
-                        info.Properties["Name"]?.get_Value()?.ToString() ?? "Desconocido",
-                        info.Properties["Description"]?.get_Value()?.ToString() ?? ""));
+                        (string?)info.Properties["Name"]?.get_Value() ?? "Desconocido",
+                        (string?)info.Properties["Description"]?.get_Value() ?? ""));
                 }
 
                 tcs.SetResult(lista);
-                if (dm != null) Marshal.ReleaseComObject(dm);
             }
             catch (Exception ex)
             {
@@ -219,19 +231,19 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
             }
             finally
             {
-                if (dm != null) Marshal.ReleaseComObject(dm);
+                // FIX: object? — null-check limpio, no CS0019
+                if (dmObj != null) Marshal.ReleaseComObject(dmObj);
             }
         });
 
         staThread.SetApartmentState(ApartmentState.STA);
         staThread.IsBackground = true;
-        staThread.Name = "WIA-Enum-STA";
         staThread.Start();
 
         return tcs.Task;
     }
 
-    // ─── VerificarDispositivoAsync ────────────────────────────────────────
+    // ─── VerificarDispositivoAsync ─────────────────────────────────────────
 
     public Task<bool> VerificarDispositivoAsync(string deviceId, CancellationToken ct = default)
     {
@@ -241,28 +253,30 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         Thread staThread = new(() =>
         {
-            DeviceManager? dm = null;
+            // FIX: object? en lugar de DeviceManager? — resuelve CS0246 + CS0019 + CS1503
+            object? dmObj = null;
+
             try
             {
-                var managerType = Type.GetTypeFromProgID("WIA.DeviceManager");
-                if (managerType == null) { tcs.SetResult(false); return; }
-                
-                dynamic dm = Activator.CreateInstance(managerType)!;
+                var dmType = Type.GetTypeFromProgID("WIA.DeviceManager");
+                if (dmType == null) { tcs.SetResult(false); return; }
+
+                dmObj = Activator.CreateInstance(dmType)!;
+                dynamic dm = dmObj;
 
                 foreach (dynamic info in dm.DeviceInfos)
                 {
-                    if ((int)info.Type == 1 && (string)info.DeviceID == deviceId)
+                    if ((int)info.Type == WIA_DEVICE_TYPE_SCANNER &&
+                        (string)info.DeviceID == deviceId)
                     {
-                        dynamic dev = info.Connect();
-                        Marshal.ReleaseComObject(dev);
+                        object devObj = info.Connect();
+                        Marshal.ReleaseComObject(devObj);
                         tcs.SetResult(true);
-                        Marshal.ReleaseComObject(dm);
                         return;
                     }
                 }
 
                 tcs.SetResult(false);
-                if (dm != null) Marshal.ReleaseComObject(dm);
             }
             catch (Exception)
             {
@@ -270,39 +284,31 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
             }
             finally
             {
-                if (dm != null) Marshal.ReleaseComObject(dm);
+                // FIX: object? — null-check limpio, no CS0019
+                if (dmObj != null) Marshal.ReleaseComObject(dmObj);
             }
         });
 
         staThread.SetApartmentState(ApartmentState.STA);
         staThread.IsBackground = true;
-        staThread.Name = $"WIA-Verify-STA-{deviceId}";
         staThread.Start();
 
         return tcs.Task;
     }
 
-    // ─── Helpers WIA ──────────────────────────────────────────────────────
+    // ─── Helper WIA (dynamic properties) ──────────────────────────────────
 
-    /// <summary>
-    /// Establece una propiedad WIA en el Item del escáner de forma segura.
-    /// IMPORTANTE: Debe llamarse desde un hilo STA; de lo contrario COM lanzará
-    /// InvalidCastException. Usa <c>dynamic</c> para eludir fallos de resolución
-    /// de la interfaz IProperties en el Interop net40 bajo .NET 8.
-    /// </summary>
-    private static void SetWiaProperty(object properties, int propId, int value)
+    private static void SetWiaProperty(dynamic properties, int propId, int value)
     {
         try
         {
-            // El indexador de WIA.Properties via dynamic dispatch
-            dynamic props = properties;
-            object key = propId;
-            var prop = props.get_Item(ref key);
+            object objPropId = propId;
+            var prop = properties.get_Item(ref objPropId);
             prop.set_Value(value);
         }
         catch (COMException)
         {
-            // Propiedad no soportada por el hardware — se omite silenciosamente
+            // La propiedad no es soportada por este dispositivo — ignorar
         }
     }
 
