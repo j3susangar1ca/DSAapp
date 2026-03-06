@@ -6,16 +6,30 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using DSA.Domain.Interfaces;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
-public sealed class GeminiIAService(HttpClient httpClient) : IIAService
+public sealed class GeminiIAService : IIAService
 {
-    // API KEY HARDCOREADA (LM STUDIO / GEMINI COMPATIBLE ENDPOINT)
-    private const string ApiKey = "YOUR_GEMINI_API_KEY"; 
-    private const string Endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    private readonly HttpClient _httpClient;
+    private readonly string _apiKey;
+    private readonly string _endpoint;
+
+    public GeminiIAService(HttpClient httpClient, IConfiguration configuration)
+    {
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+
+        // Lectura segura desde IConfiguration (appsettings.json → variables de entorno)
+        _apiKey = configuration["AiSettings:GeminiApiKey"]
+            ?? throw new InvalidOperationException(
+                "CONFIGURACIÓN FALTANTE: La clave 'AiSettings:GeminiApiKey' no fue encontrada. " +
+                "Defínala en appsettings.json o como variable de entorno 'AiSettings__GeminiApiKey'.");
+
+        _endpoint = configuration["AiSettings:GeminiEndpoint"]
+            ?? "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    }
 
     public Task<string> AnalyzeTextAsync(string text)
     {
-        // Implementación básica o delegación
         return Task.FromResult(text);
     }
 
@@ -23,7 +37,6 @@ public sealed class GeminiIAService(HttpClient httpClient) : IIAService
     {
         var prompt = $"Analiza este texto OCR y devuelve un JSON con las llaves: folio, remitente, asunto, urgente (boolean). Texto: {ocrText}";
 
-        // Estructura de petición para Google Gemini API
         var requestBody = new
         {
             contents = new[] { new { parts = new[] { new { text = prompt } } } },
@@ -32,13 +45,12 @@ public sealed class GeminiIAService(HttpClient httpClient) : IIAService
 
         try
         {
-            var response = await httpClient.PostAsync($"{Endpoint}?key={ApiKey}", 
+            var response = await _httpClient.PostAsync($"{_endpoint}?key={_apiKey}", 
                 new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json"));
             
             response.EnsureSuccessStatusCode();
             var jsonString = await response.Content.ReadAsStringAsync();
             
-            // Extracción del contenido desde el formato anidado de Gemini
             using var doc = JsonDocument.Parse(jsonString);
             var textResponse = doc.RootElement.GetProperty("candidates")[0]
                                 .GetProperty("content").GetProperty("parts")[0]
