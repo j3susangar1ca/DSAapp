@@ -1,45 +1,61 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using DSA.Application.Interfaces;
-using DSA.Application.Services;
-using DSA.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.UI.Xaml;
+using System;
 
-namespace DSA.Presentation;
+// Espacios de nombres del proyecto SIA
+using dsApp.Domain.Interfaces;
+using dsApp.Domain.Services;
+// using dsApp.Infrastructure.Data; // Asumiendo el namespace de tu DbContext
 
-public partial class App : Microsoft.UI.Xaml.Application
+namespace dsApp.Presentation;
+
+public partial class App : Application
 {
-    public static IHost Host { get; private set; }
+    // Propiedad estática para acceder al contenedor desde cualquier parte de la app
+    public static IServiceProvider Services { get; private set; } = null!;
 
     public App()
     {
-        Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
-            .ConfigureServices((context, services) =>
-            {
-                // Capa de Infraestructura (DSA.Infrastructure)
-                services.AddDbContext<SiaDbContext>(options =>
-                    options.UseNpgsql("Host=localhost;Database=dsa_db;Username=postgres;Password=tu_password"));
-
-                // Capa de Aplicación (DSA.Application)
-                services.AddScoped<DigitizationService>();
-                
-                // Registro de dependencias para el procesamiento de documentos
-                // services.AddSingleton<IScannerService, ScannerService>();
-                // services.AddSingleton<IHashService, HashService>();
-
-                // ViewModels y UI
-                services.AddTransient<MainWindow>();
-            })
-            .Build();
-
         this.InitializeComponent();
+        
+        // Inicialización del contenedor de servicios
+        var serviceCollection = new ServiceCollection();
+        ConfigureServices(serviceCollection);
+        
+        Services = serviceCollection.BuildServiceProvider();
     }
 
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    private void ConfigureServices(IServiceCollection services)
     {
-        m_window = Host.Services.GetRequiredService<MainWindow>();
+        // 1. Persistencia: PostgreSQL con soporte para JSONB y GIN (Optimizado para SIA)
+        /* services.AddDbContext<SiaDbContext>(options =>
+            options.UseNpgsql(
+                "Host=localhost;Database=SIA_DB;Username=admin;Password=secret",
+                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+            )); 
+        */
+
+        // 2. Repositorios e Infraestructura
+        services.AddScoped<IDocumentoRepository, DocumentoRepository>();
+        
+        // 3. Servicios de Hardware y Procesamiento (Singletons o Scoped)
+        services.AddSingleton<IScannerService, ScannerService>(); // Wrapper TWAIN/WIA
+        services.AddSingleton<IOCRService, TesseractOCRService>();
+        services.AddSingleton<IIAService, OllamaService>(); // Cliente Llama 3 local
+        services.AddSingleton<IStorageService, UncStorageService>(); // Gestión rutas UNC
+
+        // 4. ViewModels (Presentación)
+        services.AddTransient<MainViewModel>();
+        services.AddTransient<CapturaViewModel>();
+    }
+
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        // Resolución de la ventana principal mediante DI
+        m_window = new MainWindow();
         m_window.Activate();
     }
 
-    private Microsoft.UI.Xaml.Window m_window;
+    private Window? m_window;
 }
