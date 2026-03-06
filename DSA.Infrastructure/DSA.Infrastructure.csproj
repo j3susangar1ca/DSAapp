@@ -20,8 +20,4 @@
     <ProjectReference Include="..\DSA.Domain\DSA.Domain.csproj" />
     <ProjectReference Include="..\DSA.Application\DSA.Application.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="wiadotnet" Version="1.0.0" />
-  </ItemGroup>
 </Project>
