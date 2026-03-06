@@ -30,7 +30,7 @@ public partial class App : Application
     {
         // Carga jerárquica de configuración (Fase 5 del Roadmap)
         var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
+            .SetBasePath(AppContext.BaseDirectory) // Corrección del contexto de ejecución
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddEnvironmentVariables(); // Prioriza variables de entorno en producción
 
@@ -95,8 +95,14 @@ public partial class App : Application
         m_window = new MainWindow();
         m_window.Activate();
         
-        // Captura de la raíz visual para diálogos
-        MainStackVisualRoot = m_window.Content.XamlRoot;
+        // Forma segura para prevenir NullReferenceException en startup
+        if (m_window.Content is FrameworkElement rootElement)
+        {
+            rootElement.Loaded += (s, e) => 
+            {
+                MainStackVisualRoot = rootElement.XamlRoot;
+            };
+        }
     }
 
     private Window? m_window;

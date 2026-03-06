@@ -28,4 +28,9 @@
     <ProjectReference Include="..\DSA.Application\DSA.Application.csproj" />
     <ProjectReference Include="..\DSA.Infrastructure\DSA.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
