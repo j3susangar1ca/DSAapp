@@ -4,8 +4,8 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
-using DSA.Application.DTOs;
-using DSA.Domain.Interfaces;
+using global::DSA.Application.DTOs;
+using global::DSA.Domain.Interfaces;
 
 public sealed class AnalyticsService(IDocumentoRepository repository)
 {
