@@ -20,7 +20,7 @@ public sealed partial class DocumentWorkPage : Page
         this.InitializeComponent();
         
         // Resolución del ViewModel inyectado en App.xaml.cs
-        ViewModel = App.Services.GetRequiredService<DocumentWorkViewModel>();
+        ViewModel = App.RootScope.ServiceProvider.GetRequiredService<DocumentWorkViewModel>();
         
         // Suscripción segura a eventos del ciclo de vida visual
         this.Loaded += OnPageLoaded;

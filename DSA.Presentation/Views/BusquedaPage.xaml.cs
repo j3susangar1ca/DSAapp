@@ -11,7 +11,7 @@ public sealed partial class BusquedaPage : Page
     public BusquedaPage()
     {
         this.InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<BusquedaViewModel>();
+        ViewModel = App.RootScope.ServiceProvider.GetRequiredService<BusquedaViewModel>();
     }
 
     private void OnQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)

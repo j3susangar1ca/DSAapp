@@ -11,7 +11,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         this.InitializeComponent();
-        ViewModel = App.Services.GetRequiredService<MainViewModel>();
+        ViewModel = App.RootScope.ServiceProvider.GetRequiredService<MainViewModel>();
         SuscribirNavegacion();
     }
 

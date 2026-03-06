@@ -11,6 +11,6 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         this.InitializeComponent();
-        this.ViewModel = App.Services.GetRequiredService<MainViewModel>();
+        this.ViewModel = App.RootScope.ServiceProvider.GetRequiredService<MainViewModel>();
     }
 }
