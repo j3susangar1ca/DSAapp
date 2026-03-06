@@ -57,4 +57,14 @@ public sealed class DocumentoRepository(SiaDbContext context) : IDocumentoReposi
         int mask = 1 << bitIndex;
         return await context.Documentos.CountAsync(d => (d.EstadoVector & mask) != 0, ct);
     }
+
+    public async Task<IEnumerable<Documento>> SearchByTextAsync(string query, CancellationToken ct = default)
+    {
+        // Uso de ILike para aprovechar el índice GIN con gin_trgm_ops
+        // En producción, se recomienda usar EF.Functions.ToTsVector para TsVector si es necesario.
+        return await context.Documentos
+            .AsNoTracking()
+            .Where(d => EF.Functions.ILike(d.Nombre, $"%{query}%"))
+            .ToListAsync(ct);
+    }
 }

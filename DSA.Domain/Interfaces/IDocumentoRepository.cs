@@ -19,4 +19,9 @@ public interface IDocumentoRepository
     /// Consulta optimizada para el Dashboard que traduce el álgebra booleana a SQL nativo.
     /// </summary>
     Task<int> GetCountByBitAsync(int bitIndex, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Búsqueda Full-Text optimizada usando índices GIN (pg_trgm).
+    /// </summary>
+    Task<IEnumerable<Documento>> SearchByTextAsync(string query, CancellationToken cancellationToken = default);
 }
