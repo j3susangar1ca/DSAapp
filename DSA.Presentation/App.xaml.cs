@@ -29,14 +29,14 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        // 1. Persistencia
+        // 1. Persistencia: PostgreSQL configurado
         services.AddDbContext<SiaDbContext>(options =>
-            options.UseInMemoryDatabase("SIA_DB")); 
+            options.UseNpgsql("Host=localhost;Database=dsa_db;Username=postgres;Password=tu_password"));
 
         // 2. Repositorios
         services.AddScoped<IDocumentoRepository, DocumentoRepository>();
         
-        // 3. Servicios
+        // 3. Servicios de Aplicación e Infraestructura
         services.AddSingleton<IScannerService, ScannerService>();
         services.AddSingleton<ISecurityContext, FakeSecurityContext>();
         services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
