@@ -4,12 +4,10 @@ using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DSA.Application.Services;
+using Microsoft.UI.Dispatching;
 using DSA.Application.Interfaces;
+using DSA.Domain.Entities;
 
-/// <summary>
-/// DTO Observable para binding bidireccional en la UI.
-/// </summary>
 public partial class MetadatosDto : ObservableObject
 {
     [ObservableProperty] private string _folio = string.Empty;
@@ -19,51 +17,84 @@ public partial class MetadatosDto : ObservableObject
     [ObservableProperty] private bool _esUrgente;
 }
 
-/// <summary>
-/// ViewModel que orquesta la vista dividida. C# 12 Primary Constructor.
-/// </summary>
-public partial class DocumentWorkViewModel(IDocumentWorkflowService workflowService) : ObservableObject
+public partial class DocumentWorkViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private MetadatosDto _metadatos = new();
+    private readonly IDocumentWorkflowService _workflowService;
+    private readonly DispatcherQueue _dispatcherQueue;
+    private Documento? _documentoActual; // Referencia a la entidad de dominio
 
-    [ObservableProperty]
-    private Uri? _pdfSourceUri;
+    [ObservableProperty] private MetadatosDto _metadatos = new();
+    [ObservableProperty] private Uri? _pdfSourceUri;
+    [ObservableProperty] private bool _isLoadingPdf;
+    [ObservableProperty] private bool _isAiExtractionComplete;
 
-    [ObservableProperty]
-    private bool _isLoadingPdf;
-
-    [ObservableProperty]
-    private bool _isAiExtractionComplete;
-
-    /// <summary>
-    /// Carga el documento físico en el WebView2 y simula la extracción de IA.
-    /// </summary>
-    public async Task CargarDocumentoAsync(string pathUnc)
+    public DocumentWorkViewModel(IDocumentWorkflowService workflowService)
     {
+        _workflowService = workflowService;
+        _dispatcherQueue = DispatcherQueue.GetForCurrentThread(); // Asegura el hilo UI
+    }
+
+    public async Task CargarDocumentoAsync(Documento documento)
+    {
+        _documentoActual = documento;
         IsLoadingPdf = true;
         
-        // Mapeo de ruta UNC a un formato URI válido para WebView2
-        PdfSourceUri = new Uri(pathUnc);
+        PdfSourceUri = new Uri(documento.PathUNC);
 
-        // TODO: Invocar a IIAService para extraer semántica real
-        await Task.Delay(1500); // Simulando inferencia Llama 3 local
+        // Se lanza a un hilo secundario para evitar bloqueo de la UI
+        await Task.Run(async () =>
+        {
+            await Task.Delay(1500); // TODO: Reemplazar por invocación real a IIAService
 
-        IsAiExtractionComplete = true;
-        IsLoadingPdf = false;
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                // Mapeo simulado de la IA
+                Metadatos.Folio = "001-2026";
+                Metadatos.EsUrgente = documento.IsUrgent;
+                IsAiExtractionComplete = true;
+                IsLoadingPdf = false;
+            });
+        });
     }
 
     [RelayCommand]
     private async Task GuardarMetadatosAsync()
     {
-        // TODO: Mapear MetadatosDto a Entidad de Dominio y avanzar Vector de Estado a 'VALD' o 'CLAS'
-        await Task.CompletedTask;
+        if (_documentoActual == null) return;
+
+        await Task.Run(() =>
+        {
+            // Mapeo DTO -> Dominio
+            _documentoActual.SetUrgencia(Metadatos.EsUrgente);
+            _documentoActual.ValidarClasificacion();
+
+            // Persistencia a través del servicio de aplicación
+            // await _workflowService.ActualizarDocumentoAsync(_documentoActual);
+
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                // Notificar éxito a la UI (puedes agregar un InfoBar de éxito aquí)
+                IsAiExtractionComplete = false; 
+            });
+        });
     }
 
     [RelayCommand]
     private async Task RechazarDocumentoAsync()
     {
-        // TODO: Transición a estado Terminal 'RECH' (D[10]=1)
-        await Task.CompletedTask;
+        if (_documentoActual == null) return;
+
+        await Task.Run(() =>
+        {
+            _documentoActual.Rechazar();
+            // await _workflowService.ActualizarDocumentoAsync(_documentoActual);
+
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                // Cierra la vista o limpia el formulario
+                PdfSourceUri = null;
+            });
+        });
     }
 }
+
