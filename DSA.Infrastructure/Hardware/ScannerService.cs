@@ -266,7 +266,7 @@ namespace DSA.Infrastructure.Hardware
 
         // ─── Helpers WIA ──────────────────────────────────────────────────────
 
-        private static void SetWiaProperty(dynamic properties, int propId, int value)
+        private static void SetWiaProperty(IProperties properties, int propId, int value)
         {
             try
             {
