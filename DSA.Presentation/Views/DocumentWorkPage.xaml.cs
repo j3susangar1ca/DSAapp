@@ -29,7 +29,14 @@ public sealed partial class DocumentWorkPage : Page
 
     private async void OnPageLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        await InicializarWebView2Async();
+        try
+        {
+            await InicializarWebView2Async();
+        }
+        catch (Exception ex)
+        {
+            ViewModel.Metadatos.Asunto = $"ERROR CRÍTICO AL CARGAR LA PÁGINA: {ex.Message}";
+        }
     }
 
     private async Task InicializarWebView2Async()
