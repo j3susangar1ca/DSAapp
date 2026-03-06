@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using DSA.Domain.Entities;
 
 namespace DSA.Infrastructure.Persistence;
 
