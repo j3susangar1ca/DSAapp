@@ -5,9 +5,9 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using DSA.Domain.Entities;
-using DSA.Domain.Interfaces; // Repositorios y Storage
-using DSA.Application.Security; // CryptoUtils
+using global::DSA.Domain.Entities;
+using global::DSA.Domain.Interfaces; // Repositorios y Storage
+using global::DSA.Application.Security; // CryptoUtils
 
 public interface IRelationService
 {

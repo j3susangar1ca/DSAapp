@@ -17,11 +17,11 @@ using iText.Layout.Element;
 using iText.Pdfa;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
-using DSA.Domain.Entities;
-using DSA.Domain.Interfaces;
-using DSA.Application.Interfaces;
-using DSA.Application.DTOs;
-using DSA.Application.Exceptions;
+using global::DSA.Domain.Entities;
+using global::DSA.Domain.Interfaces;
+using global::DSA.Application.Interfaces;
+using global::DSA.Application.DTOs;
+using global::DSA.Application.Exceptions;
 
 // ─── Servicio Principal ───────────────────────────────────────────────────────
 

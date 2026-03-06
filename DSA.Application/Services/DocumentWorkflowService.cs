@@ -3,9 +3,9 @@ namespace DSA.Application.Services;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DSA.Application.Interfaces;
-using DSA.Domain.Entities;
-using DSA.Domain.Interfaces;
+using global::DSA.Application.Interfaces;
+using global::DSA.Domain.Entities;
+using global::DSA.Domain.Interfaces;
 
 public sealed class DocumentWorkflowService(
     IDocumentoRepository repository,
