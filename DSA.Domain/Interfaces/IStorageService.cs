@@ -16,5 +16,8 @@ public interface IStorageService
     
     ValueTask<Stream> GetFileStreamAsync(string pathUnc, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Elimina el archivo si existe. Para rollback en caso de fallo post-escritura.
+    /// </summary>
     ValueTask EliminarSiExisteAsync(string pathUnc, CancellationToken cancellationToken = default);
 }
