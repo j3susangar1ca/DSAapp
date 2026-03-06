@@ -14,16 +14,13 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
     <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.8" />
+    <PackageReference Include="WiaDotNet" Version="1.0.0">
+      <NoWarn>NU1701</NoWarn>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DSA.Domain\DSA.Domain.csproj" />
     <ProjectReference Include="..\DSA.Application\DSA.Application.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="WiaDotNet" Version="1.0.0">
-      <NoWarn>NU1701</NoWarn>
-    </PackageReference>
   </ItemGroup>
 </Project>
