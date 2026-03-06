@@ -20,14 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <COMReference Include="WIA">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>0</VersionMinor>
-      <VersionMajor>2</VersionMajor>
-      <Guid>94a0e369-0210-447c-be8b-6f027376d799</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
+    <PackageReference Include="WiaDotNet" Version="1.0.0" />
   </ItemGroup>
 </Project>
