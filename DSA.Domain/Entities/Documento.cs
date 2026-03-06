@@ -38,30 +38,44 @@ public sealed class Documento(Guid id, string nombre)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(hash);
         HashSHA256 = hash;
-        
-        // Operación atómica: Activar el bit SEAL (D[4]) al inyectar el Hash
-        EstadoVector |= 1 << 4; 
+        EstadoVector |= 1 << 4; // Activar el bit SEAL (D[4])
     }
 
-    /// <summary>
-    /// Transiciona la entidad al estado Terminal "Archivado". Valida el Sello Criptográfico.
-    /// </summary>
+    public void SetUrgencia(bool esUrgente)
+    {
+        if (esUrgente)
+            EstadoVector |= 1 << 6; // Enciende D[6]
+        else
+            EstadoVector &= unchecked((ushort)~(1 << 6)); // Apaga D[6]
+    }
+
+    public void ValidarClasificacion()
+    {
+        if (IsArchivado || IsRechazado)
+            throw new InvalidOperationException("El documento está en un estado terminal.");
+            
+        EstadoVector |= 1 << 9; // Activa VALD (D[9])
+        EstadoVector |= 1 << 3; // Activa CLAS (D[3])
+    }
+
+    public void Rechazar()
+    {
+        if (IsArchivado)
+            throw new InvalidOperationException("No se puede rechazar un documento ya archivado.");
+            
+        EstadoVector |= 1 << 10; // Activa RECH (D[10])
+        EstadoVector &= unchecked((ushort)~((1 << 8) | (1 << 9))); // Apaga PROC y VALD
+    }
+
     public void Archivar()
     {
-        // Fail-Safe: Imposibilidad matemática de archivar sin Sello (D[4]) o Hash válido
         if (!IsSellado || string.IsNullOrWhiteSpace(HashSHA256))
-        {
-            throw new InvalidOperationException("Infracción de Integridad (Código 210-A): No se puede archivar un documento sin Sello Criptográfico SHA-256.");
-        }
+            throw new InvalidOperationException("Infracción de Integridad (Código 210-A): Falla Sello SHA-256.");
         
-        // Mutabilidad nula si el estado es terminal (ARCH/RECH)
         if (IsArchivado || IsRechazado)
-        {
-            throw new InvalidOperationException("El documento ya se encuentra en un estado terminal inmutable.");
-        }
+            throw new InvalidOperationException("El documento ya se encuentra en un estado terminal.");
 
-        // Transición atómica: Activar ARCH (D[11]) y desactivar PROC (D[8]) y VALD (D[9]) simultáneamente
-        EstadoVector |= 1 << 11;
-        EstadoVector &= unchecked((ushort)~((1 << 8) | (1 << 9)));
+        EstadoVector |= 1 << 11; // Activa ARCH (D[11])
+        EstadoVector &= unchecked((ushort)~((1 << 8) | (1 << 9))); // Apaga PROC y VALD
     }
 }
