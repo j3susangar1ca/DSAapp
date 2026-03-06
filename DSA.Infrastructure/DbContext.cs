@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace SIA.Infrastructure.Persistence;
+namespace DSA.Infrastructure.Persistence;
 
 public class SiaDbContext(DbContextOptions<SiaDbContext> options) : DbContext(options)
 {

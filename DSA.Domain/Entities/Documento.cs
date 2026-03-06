@@ -1,4 +1,4 @@
-namespace SIA.Domain.Entities;
+namespace DSA.Domain.Entities;
 
 public sealed class Documento(Guid id, string nombre)
 {
