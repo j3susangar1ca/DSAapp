@@ -84,11 +84,11 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                 item = scanner.Items[1];
 
-                // Configurar propiedades WIA (Se inyecta cast a WIA.Properties)
+                // Configurar propiedades WIA mediante interfaz IProperties
                 var opts = opciones ?? OpcionesEscaneo.Institucional;
-                SetWiaProperty(item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
-                SetWiaProperty(item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
-                SetWiaProperty(item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
+                SetWiaProperty((IProperties)item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
+                SetWiaProperty((IProperties)item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
+                SetWiaProperty((IProperties)item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
 
                 _logger.LogDebug(
                     "WIA configurado: DPI={Dpi} Modo={Modo} Documento={Id}",
@@ -273,13 +273,13 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
     /// IMPORTANTE: Debe llamarse desde un hilo STA; de lo contrario COM lanzará
     /// InvalidCastException. No usa <c>dynamic</c> para evitar dispatch tardío en MTA.
     /// </summary>
-    private static void SetWiaProperty(Properties properties, int propId, int value)
+    private static void SetWiaProperty(IProperties properties, int propId, int value)
     {
         try
         {
-            // El indexador de WIA.Properties acepta object (VARIANT)
+            // El indexador de WIA.IProperties acepta object (VARIANT)
             object key = propId;
-            Property prop = properties.get_Item(ref key);
+            IProperty prop = properties.get_Item(ref key);
             prop.set_Value(value);
         }
         catch (COMException)
