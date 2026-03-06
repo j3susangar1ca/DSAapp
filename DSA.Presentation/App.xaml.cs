@@ -45,6 +45,7 @@ public partial class App : Application
         // 4. ViewModels
         services.AddTransient<MainViewModel>();
         services.AddTransient<CapturaViewModel>();
+        services.AddTransient<DocumentWorkViewModel>();
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)

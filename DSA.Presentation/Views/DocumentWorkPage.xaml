@@ -1,0 +1,70 @@
+<Page
+    x:Class="DSA.Presentation.Views.DocumentWorkPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="using:DSA.Presentation.ViewModels"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="400" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+            <WebView2 x:Name="PdfViewer" 
+                      Source="{x:Bind ViewModel.PdfSourceUri, Mode=OneWay}" 
+                      HorizontalAlignment="Stretch" 
+                      VerticalAlignment="Stretch" />
+            
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoadingPdf, Mode=OneWay}" 
+                          Width="64" Height="64" />
+        </Grid>
+
+        <ScrollViewer Grid.Column="2" Padding="24" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="16">
+                <TextBlock Text="Metadatos Extraídos (IA)" Style="{StaticResource TitleTextBlockStyle}" />
+                
+                <InfoBar IsOpen="True" Severity="Success" 
+                         Title="Extracción Cognitiva Completada" 
+                         Message="Ollama Llama-3 ha prellenado los campos." 
+                         Visibility="{x:Bind ViewModel.IsAiExtractionComplete, Mode=OneWay}" />
+
+                <TextBox Header="Folio Físico" 
+                         Text="{x:Bind ViewModel.Metadatos.Folio, Mode=TwoWay}" 
+                         PlaceholderText="Ej. 001-2026" />
+                
+                <TextBox Header="Remitente / Autor" 
+                         Text="{x:Bind ViewModel.Metadatos.Remitente, Mode=TwoWay}" 
+                         PlaceholderText="Nombre o Dependencia" />
+                
+                <TextBox Header="Asunto Central" 
+                         Text="{x:Bind ViewModel.Metadatos.Asunto, Mode=TwoWay}" 
+                         TextWrapping="Wrap" MinHeight="80" AcceptsReturn="True" />
+                         
+                <DatePicker Header="Fecha del Documento" 
+                            Date="{x:Bind ViewModel.Metadatos.FechaRecepcion, Mode=TwoWay}" />
+
+                <ToggleSwitch Header="Prioridad Urgente (SLA)" 
+                              IsOn="{x:Bind ViewModel.Metadatos.EsUrgente, Mode=TwoWay}" 
+                              OffContent="Normal" OnContent="Urgente" />
+
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,24,0,0">
+                    <Button Content="Validar y Guardar" 
+                            Command="{x:Bind ViewModel.GuardarMetadatosCommand}" 
+                            Style="{StaticResource AccentButtonStyle}" 
+                            HorizontalAlignment="Stretch" />
+                    
+                    <Button Content="Rechazar" 
+                            Command="{x:Bind ViewModel.RechazarDocumentoCommand}" 
+                            Style="{StaticResource DefaultButtonStyle}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
