@@ -17,18 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DSA.Domain\DSA.Domain.csproj" />
-    <ProjectReference Include="..\DSA.Application\DSA.Application.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <COMReference Include="WIA">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>0</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>94a0e92d-43c0-494e-ac10-edb33a297f6e</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-    </COMReference>
+    <PackageReference Include="WiaDotNet" Version="1.0.0">
+      <NoWarn>NU1701</NoWarn>
+    </PackageReference>
   </ItemGroup>
 </Project>
