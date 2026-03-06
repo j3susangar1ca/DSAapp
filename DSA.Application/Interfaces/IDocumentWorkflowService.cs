@@ -3,6 +3,7 @@ namespace DSA.Application.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using DSA.Domain.Entities;
 
 public interface IDocumentWorkflowService
 {
