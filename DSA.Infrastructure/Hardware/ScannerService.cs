@@ -84,11 +84,11 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
                 item = scanner.Items[1];
 
-                // Configurar propiedades WIA mediante interfaz IProperties
+                // Configurar propiedades WIA (Uso de dynamic para evitar problemas de resolución de tipos Interop en net8.0)
                 var opts = opciones ?? OpcionesEscaneo.Institucional;
-                SetWiaProperty((IProperties)item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
-                SetWiaProperty((IProperties)item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
-                SetWiaProperty((IProperties)item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
+                SetWiaProperty(item.Properties, 6146, (int)opts.ModoColor);    // Color Intent
+                SetWiaProperty(item.Properties, 6147, opts.ResolucionDpi);      // Horizontal DPI
+                SetWiaProperty(item.Properties, 6148, opts.ResolucionDpi);      // Vertical DPI
 
                 _logger.LogDebug(
                     "WIA configurado: DPI={Dpi} Modo={Modo} Documento={Id}",
@@ -271,24 +271,22 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
     /// <summary>
     /// Establece una propiedad WIA en el Item del escáner de forma segura.
     /// IMPORTANTE: Debe llamarse desde un hilo STA; de lo contrario COM lanzará
-    /// InvalidCastException. No usa <c>dynamic</c> para evitar dispatch tardío en MTA.
+    /// InvalidCastException. Usa <c>dynamic</c> para eludir fallos de resolución
+    /// de la interfaz IProperties en el Interop net40 bajo .NET 8.
     /// </summary>
-    private static void SetWiaProperty(IProperties properties, int propId, int value)
+    private static void SetWiaProperty(object properties, int propId, int value)
     {
         try
         {
-            // El indexador de WIA.IProperties acepta object (VARIANT)
+            // El indexador de WIA.Properties via dynamic dispatch
+            dynamic props = properties;
             object key = propId;
-            IProperty prop = properties.get_Item(ref key);
+            var prop = props.get_Item(ref key);
             prop.set_Value(value);
         }
         catch (COMException)
         {
             // Propiedad no soportada por el hardware — se omite silenciosamente
-        }
-        catch (InvalidCastException)
-        {
-            // Garantía extra: si el COM RCW falla en MTA (no debería en STA) — ignorar
         }
     }
 
