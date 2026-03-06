@@ -4,12 +4,16 @@
 //
 // Implementación de IScannerService usando Windows Image Acquisition (WIA) COM.
 // Aísla las llamadas COM en hilos STA para no colapsar WinUI 3.
+//
+// REQUISITO: Las llamadas WIA deben ejecutarse en un hilo STA (Single-Threaded
+// Apartment). Task.Run usa hilos MTA del ThreadPool — uso directo causaría
+// InvalidCastException en objetos COM. El orquestador de hilos STA está aquí.
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -19,6 +23,7 @@ using DSA.Application.DTOs;
 
 namespace DSA.Infrastructure.Hardware;
 
+[SupportedOSPlatform("windows")]
 public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerService, IDisposable
 {
     private readonly ILogger<ScannerService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -105,7 +110,12 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
                     try
                     {
                         var imageFile = (ImageFile)item.Transfer(FormatID.wiaFormatPNG);
-                        byte[] imageBytes = (byte[])imageFile.FileData.get_BinaryData();
+                        // get_BinaryData() devuelve object — extraemos de forma segura
+                        var rawData = imageFile.FileData.get_BinaryData();
+                        byte[] imageBytes = rawData as byte[]
+                            ?? throw new EscanerOperacionException(
+                                $"WIA devolvió datos binarios en formato inesperado ({rawData?.GetType().Name ?? "null"}).",
+                                null, opciones?.DispositivoId, 0);
                         paginas.Add(imageBytes);
 
                         Marshal.ReleaseComObject(imageFile);
@@ -158,6 +168,7 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         staThread.SetApartmentState(ApartmentState.STA);
         staThread.IsBackground = true;
+        staThread.Name = $"WIA-Capture-STA-{documentoId:N}";
         staThread.Start();
 
         return tcs.Task;
@@ -203,6 +214,7 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         staThread.SetApartmentState(ApartmentState.STA);
         staThread.IsBackground = true;
+        staThread.Name = "WIA-Enum-STA";
         staThread.Start();
 
         return tcs.Task;
@@ -248,6 +260,7 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
         staThread.SetApartmentState(ApartmentState.STA);
         staThread.IsBackground = true;
+        staThread.Name = $"WIA-Verify-STA-{deviceId}";
         staThread.Start();
 
         return tcs.Task;
@@ -255,17 +268,27 @@ public sealed class ScannerService(ILogger<ScannerService> logger) : IScannerSer
 
     // ─── Helpers WIA ──────────────────────────────────────────────────────
 
-    private static void SetWiaProperty(dynamic properties, int propId, int value)
+    /// <summary>
+    /// Establece una propiedad WIA en el Item del escáner de forma segura.
+    /// IMPORTANTE: Debe llamarse desde un hilo STA; de lo contrario COM lanzará
+    /// InvalidCastException. No usa <c>dynamic</c> para evitar dispatch tardío en MTA.
+    /// </summary>
+    private static void SetWiaProperty(Properties properties, int propId, int value)
     {
         try
         {
-            object objPropId = propId;
-            var prop = properties.get_Item(ref objPropId);
+            // El indexador de WIA.Properties acepta object (VARIANT)
+            object key = propId;
+            Property prop = properties.get_Item(ref key);
             prop.set_Value(value);
         }
         catch (COMException)
         {
-            // La propiedad no es soportada por este dispositivo — ignorar
+            // Propiedad no soportada por el hardware — se omite silenciosamente
+        }
+        catch (InvalidCastException)
+        {
+            // Garantía extra: si el COM RCW falla en MTA (no debería en STA) — ignorar
         }
     }
 
