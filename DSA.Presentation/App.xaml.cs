@@ -10,7 +10,8 @@ using DSA.Infrastructure.Persistence;
 using DSA.Infrastructure.Hardware;
 using DSA.Infrastructure.Storage;
 using DSA.Infrastructure.AI;
-using DSA.Presentation.ViewModels;
+using Microsoft.Windows.AppNotifications;
+using DSA.Presentation.Services;
 
 namespace DSA.Presentation;
 
@@ -29,6 +30,15 @@ public partial class App : Application
         ConfigureServices(serviceCollection);
         
         Services = serviceCollection.BuildServiceProvider();
+
+        // Registro e Inicialización de Notificaciones Nativas (Windows App SDK)
+        AppNotificationManager.Default.NotificationInvoked += OnNotificationInvoked;
+        AppNotificationManager.Default.Register();
+    }
+
+    private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
+    {
+        // Lógica para manejar clics en notificaciones (ej. navegar a la página del documento)
     }
 
     private void ConfigureServices(IServiceCollection services)
@@ -49,12 +59,14 @@ public partial class App : Application
         services.AddSingleton<IStorageService, UncStorageService>();
         services.AddHttpClient();
         services.AddSingleton<IIAService, GeminiIAService>();
+        services.AddSingleton<NativeNotificationService>(); // Servicio nativo de alertas
 
         // 4. ViewModels
         services.AddTransient<MainViewModel>();
         services.AddTransient<CapturaViewModel>();
         services.AddTransient<DocumentWorkViewModel>();
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<BusquedaViewModel>(); // ViewModel de Búsqueda
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
