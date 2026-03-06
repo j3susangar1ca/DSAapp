@@ -10,23 +10,55 @@
 
     <Page.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
     </Page.Resources>
 
     <StackPanel Spacing="16" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Ellipse Width="48" Height="48" Fill="CornflowerBlue" 
+
+        <Ellipse Width="48" Height="48"
+                 Fill="CornflowerBlue"
                  Stroke="DarkGray" StrokeThickness="2" />
-        
-        <TextBlock Text="{x:Bind ViewModel.MensajeEstado, Mode=OneWay}" 
-                   Style="{StaticResource SubtitleTextBlockStyle}" 
+
+        <TextBlock Text="{x:Bind ViewModel.MensajeEstado, Mode=OneWay}"
+                   Style="{StaticResource SubtitleTextBlockStyle}"
                    TextAlignment="Center" />
 
-        <ProgressRing IsActive="{x:Bind ViewModel.EstaEscaneando, Mode=OneWay}" 
+        <ProgressBar Value="{x:Bind ViewModel.Porcentaje, Mode=OneWay}"
+                     Minimum="0" Maximum="100"
+                     Width="300" />
+
+        <TextBlock Text="{x:Bind ViewModel.FaseActual, Mode=OneWay}"
+                   FontSize="12"
+                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                   TextAlignment="Center" />
+
+        <ProgressRing IsActive="{x:Bind ViewModel.EstaEscaneando, Mode=OneWay}"
                       Width="64" Height="64" Margin="0,20,0,0"/>
 
-        <Button Content="Iniciar Captura" 
-                Command="{x:Bind ViewModel.IniciarDigitalizacionCommand}" 
-                IsEnabled="{x:Bind ViewModel.EstaEscaneando, Mode=OneWay, Converter={StaticResource InvertedBoolConverter}}"
-                Style="{StaticResource AccentButtonStyle}" 
+        <Button Content="Iniciar Captura"
+                Command="{x:Bind ViewModel.IniciarDigitalizacionCommand}"
+                CommandParameter="{x:Null}"
+                IsEnabled="{x:Bind ViewModel.EstaEscaneando, Mode=OneWay,
+                            Converter={StaticResource InvertedBoolConverter}}"
+                Style="{StaticResource AccentButtonStyle}"
                 HorizontalAlignment="Center" />
+
+        <Button Content="Cancelar"
+                Command="{x:Bind ViewModel.CancelarDigitalizacionCommand}"
+                Visibility="{x:Bind ViewModel.EstaEscaneando, Mode=OneWay,
+                             Converter={StaticResource BoolToVis}}"
+                HorizontalAlignment="Center" />
+
+        <StackPanel Spacing="8"
+                    Visibility="{x:Bind ViewModel.Exitoso, Mode=OneWay,
+                                 Converter={StaticResource BoolToVis}}">
+            <InfoBar IsOpen="True" Severity="Success"
+                     Title="Digitalización Completada"
+                     Message="{x:Bind ViewModel.MensajeEstado, Mode=OneWay}" />
+            <TextBlock FontSize="11"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Text="{x:Bind ViewModel.HashResultado, Mode=OneWay}" />
+        </StackPanel>
+
     </StackPanel>
 </Page>
