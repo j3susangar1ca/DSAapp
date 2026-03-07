@@ -12,8 +12,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <PublishReadyToRun>false</PublishReadyToRun>
-    <EnableDefaultPageItems>false</EnableDefaultPageItems>
-    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,15 +31,6 @@
   <ItemGroup>
     <ProjectReference Include="..\DSA.Application\DSA.Application.csproj" />
     <ProjectReference Include="..\DSA.Infrastructure\DSA.Infrastructure.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <ApplicationDefinition Include="App.xaml" />
-    <Page Include="MainWindow.xaml" />
-    <Page Include="Views\BusquedaPage.xaml" />
-    <Page Include="Views\CapturaView.xaml" />
-    <Page Include="Views\DashboardPage.xaml" />
-    <Page Include="Views\DocumentWorkPage.xaml" />
-    <Page Include="Views\MainPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
