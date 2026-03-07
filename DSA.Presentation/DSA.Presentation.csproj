@@ -33,6 +33,16 @@
     <ProjectReference Include="..\DSA.Infrastructure\DSA.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+    <Page Include="MainWindow.xaml" />
+    <Page Include="Views\BusquedaPage.xaml" />
+    <Page Include="Views\CapturaView.xaml" />
+    <Page Include="Views\DashboardPage.xaml" />
+    <Page Include="Views\DocumentWorkPage.xaml" />
+    <Page Include="Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

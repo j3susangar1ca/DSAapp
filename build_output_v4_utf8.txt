@@ -1,0 +1,11 @@
+﻿  Determinando los proyectos que se van a restaurar...
+  Todos los proyectos est├ín actualizados para la restauraci├│n.
+C:\Users\jlang\.nuget\packages\microsoft.windowsappsdk\1.5.240311000\buildTransitive\Microsoft.WinUI.targets(65,5): error NETSDK1022: Se incluyeron "Page" elementos duplicados. El SDK de .NET incluye "Page" elementos de su directorio de proyecto de manera predeterminada. Puede quitar esos elementos del archivo de proyecto o establecer la propiedad "EnableDefaultPageItems" en "false" si desea incluirlos expl├¡citamente en el archivo de proyecto. Para m├ís informaci├│n, consulte https://aka.ms/sdkimplicititems. Los elementos duplicados eran: 'MainWindow.xaml'; 'Views\BusquedaPage.xaml'; 'Views\CapturaView.xaml'; 'Views\DashboardPage.xaml'; 'Views\DocumentWorkPage.xaml'; 'Views\MainPage.xaml' [C:\DSAap\DSA.Presentation\DSA.Presentation.csproj]
+
+ERROR al compilar.
+
+C:\Users\jlang\.nuget\packages\microsoft.windowsappsdk\1.5.240311000\buildTransitive\Microsoft.WinUI.targets(65,5): error NETSDK1022: Se incluyeron "Page" elementos duplicados. El SDK de .NET incluye "Page" elementos de su directorio de proyecto de manera predeterminada. Puede quitar esos elementos del archivo de proyecto o establecer la propiedad "EnableDefaultPageItems" en "false" si desea incluirlos expl├¡citamente en el archivo de proyecto. Para m├ís informaci├│n, consulte https://aka.ms/sdkimplicititems. Los elementos duplicados eran: 'MainWindow.xaml'; 'Views\BusquedaPage.xaml'; 'Views\CapturaView.xaml'; 'Views\DashboardPage.xaml'; 'Views\DocumentWorkPage.xaml'; 'Views\MainPage.xaml' [C:\DSAap\DSA.Presentation\DSA.Presentation.csproj]
+    0 Advertencia(s)
+    1 Errores
+
+Tiempo transcurrido 00:00:00.89
