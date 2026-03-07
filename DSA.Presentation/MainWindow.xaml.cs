@@ -1,5 +1,10 @@
+using System;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Dispatching;
+using Microsoft.Extensions.DependencyInjection; // Necesario para GetRequiredService
 using DSA.Presentation.Views;
+using DSA.Presentation.ViewModels;            // Necesario para MainViewModel
 using DSA.Domain.Entities;
 
 namespace DSA.Presentation;
