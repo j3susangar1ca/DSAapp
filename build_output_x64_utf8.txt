@@ -1,0 +1,14 @@
+﻿  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\DSAap\DSA.Domain\DSA.Domain.csproj (en 159 ms).
+  Se ha restaurado C:\DSAap\DSA.Infrastructure\DSA.Infrastructure.csproj (en 506 ms).
+  Se ha restaurado C:\DSAap\DSA.Application\DSA.Application.csproj (en 506 ms).
+  Se ha restaurado C:\DSAap\DSA.Presentation\DSA.Presentation.csproj (en 596 ms).
+C:\Program Files\dotnet\sdk\10.0.103\Current\SolutionFile\ImportAfter\Microsoft.NET.Sdk.Solution.targets(27,5): error NETSDK1134: No se admite la creaci├│n de una soluci├│n con un runtimeIdentifier espec├¡fico. Si deseas publicar para un ├║nico RID, especifica el RID en el nivel de proyecto individual en su lugar. [C:\DSAap\DSA.slnx]
+
+ERROR al compilar.
+
+C:\Program Files\dotnet\sdk\10.0.103\Current\SolutionFile\ImportAfter\Microsoft.NET.Sdk.Solution.targets(27,5): error NETSDK1134: No se admite la creaci├│n de una soluci├│n con un runtimeIdentifier espec├¡fico. Si deseas publicar para un ├║nico RID, especifica el RID en el nivel de proyecto individual en su lugar. [C:\DSAap\DSA.slnx]
+    0 Advertencia(s)
+    1 Errores
+
+Tiempo transcurrido 00:00:01.32
