@@ -1,0 +1,15 @@
+﻿  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\DSAap\DSA.Presentation\DSA.Presentation.csproj (en 1.45 s).
+  3 de 4┬áproyectos est├ín actualizados para la restauraci├│n.
+  DSA.Domain -> C:\DSAap\DSA.Domain\bin\Debug\net8.0\DSA.Domain.dll
+  DSA.Application -> C:\DSAap\DSA.Application\bin\Debug\net8.0\DSA.Application.dll
+  DSA.Infrastructure -> C:\DSAap\DSA.Infrastructure\bin\Debug\net8.0-windows10.0.19041.0\DSA.Infrastructure.dll
+C:\Users\jlang\.nuget\packages\microsoft.windowsappsdk\1.5.240311000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(590,9): error MSB3073: El comando ""C:\Users\jlang\.nuget\packages\microsoft.windowsappsdk\1.5.240311000\buildTransitive\..\tools\net6.0\..\net472\XamlCompiler.exe" "obj\Debug\net8.0-windows10.0.19041.0\\input.json" "obj\Debug\net8.0-windows10.0.19041.0\\output.json"" sali├│ con el c├│digo 1. [C:\DSAap\DSA.Presentation\DSA.Presentation.csproj]
+
+ERROR al compilar.
+
+C:\Users\jlang\.nuget\packages\microsoft.windowsappsdk\1.5.240311000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(590,9): error MSB3073: El comando ""C:\Users\jlang\.nuget\packages\microsoft.windowsappsdk\1.5.240311000\buildTransitive\..\tools\net6.0\..\net472\XamlCompiler.exe" "obj\Debug\net8.0-windows10.0.19041.0\\input.json" "obj\Debug\net8.0-windows10.0.19041.0\\output.json"" sali├│ con el c├│digo 1. [C:\DSAap\DSA.Presentation\DSA.Presentation.csproj]
+    0 Advertencia(s)
+    1 Errores
+
+Tiempo transcurrido 00:00:07.60
