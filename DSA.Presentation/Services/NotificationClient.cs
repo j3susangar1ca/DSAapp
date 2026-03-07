@@ -1,10 +1,10 @@
-// 1. PRESENTACIÓN: DSA.Presentation/Services/NotificationClient.cs
 namespace DSA.Presentation.Services;
 
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Toolkit.Uwp.Notifications; // NuGet: Microsoft.Toolkit.Uwp.Notifications
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 using Microsoft.UI.Dispatching;
 using Microsoft.Extensions.Logging;
 
@@ -52,15 +52,23 @@ public sealed class NotificationClient : IAsyncDisposable
     /// </summary>
     private void MostrarNotificacionNativa(string folio, Guid documentoId)
     {
-        // Uso de Microsoft.Toolkit.Uwp.Notifications para una experiencia fluida
-        new ToastContentBuilder()
-            .AddArgument("action", "viewDocument")
-            .AddArgument("docId", documentoId.ToString())
-            .AddText("📦 Nuevo Oficio Detectado")
-            .AddText($"Folio: {folio}")
-            .AddAttributionText("SIA - Sistema Institucional de Archivos")
-            .SetToastDuration(ToastDuration.Long)
-            .Show();
+        try
+        {
+            // Construcción nativa alineada con el Windows App SDK
+            var notification = new AppNotificationBuilder()
+                .AddArgument("action", "viewDocument")
+                .AddArgument("docId", documentoId.ToString())
+                .AddText("📦 Nuevo Oficio Detectado")
+                .AddText($"Folio: {folio}")
+                .AddAttributionText("SIA - Sistema Institucional de Archivos")
+                .BuildNotification();
+
+            AppNotificationManager.Default.Show(notification);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al mostrar la notificación nativa.");
+        }
     }
 
     public async ValueTask DisposeAsync()
