@@ -85,9 +85,11 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
-                <NavigationViewItem x:Uid="Shell_Escaner" helpers:NavigationHelper.NavigateTo="DSAapp.ViewModels.EscanerViewModel">
+                <NavigationViewItem x:Uid="Shell_Escaner"
+                                    helpers:NavigationHelper.NavigateTo="DSAapp.ViewModels.EscanerViewModel">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE8D7;" FontFamily="{StaticResource SymbolThemeFontFamily}"/>
+                        <FontIcon Glyph="&#xE8D7;"
+                                  FontFamily="{StaticResource SymbolThemeFontFamily}"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
