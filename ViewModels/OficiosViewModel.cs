@@ -3,10 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using DSAapp.Core.Models;
 using DSAapp.Core.Services;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace DSAapp.ViewModels;
 
@@ -14,85 +11,83 @@ public partial class OficiosViewModel : ObservableObject
 {
     private readonly AppDbContext _db;
 
-    // Propiedades enlazadas a las cajas de texto de la pantalla (UI)
+    // ── Campos del formulario ──
     [ObservableProperty] private string _remitente = string.Empty;
     [ObservableProperty] private string _asunto = string.Empty;
     [ObservableProperty] private string _usuarioAsignado = string.Empty;
     [ObservableProperty] private string _folioOriginal = string.Empty;
 
-    // Aquí guardaremos temporalmente la ruta del PDF que el usuario seleccione en su PC
-    [ObservableProperty] private string _rutaArchivoLocal = string.Empty;
+    // ── Archivo adjunto ──
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TieneArchivoSeleccionado))]
+    [NotifyPropertyChangedFor(nameof(NombreArchivoSeleccionado))]
+    private string _rutaArchivoLocal = string.Empty;
 
-    public OficiosViewModel(AppDbContext db)
-    {
-        _db = db;
-    }
+    // ── Feedback: último folio generado ──
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TieneUltimoFolio))]
+    private string _ultimoFolioGenerado = string.Empty;
+
+    // ── Propiedades calculadas para los bindings de la vista ──
+    public bool TieneArchivoSeleccionado => !string.IsNullOrEmpty(RutaArchivoLocal);
+    public string NombreArchivoSeleccionado => Path.GetFileName(RutaArchivoLocal);
+    public bool TieneUltimoFolio => !string.IsNullOrEmpty(UltimoFolioGenerado);
+
+    public OficiosViewModel(AppDbContext db) => _db = db;
 
     [RelayCommand]
     public async Task GuardarOficioAsync()
     {
-        // Validaciones básicas antes de intentar guardar
-        if (string.IsNullOrWhiteSpace(Remitente) || string.IsNullOrWhiteSpace(Asunto) || string.IsNullOrWhiteSpace(UsuarioAsignado))
+        if (string.IsNullOrWhiteSpace(Remitente) ||
+            string.IsNullOrWhiteSpace(Asunto) ||
+            string.IsNullOrWhiteSpace(UsuarioAsignado))
         {
-            System.Diagnostics.Debug.WriteLine("Faltan campos obligatorios por llenar.");
-            return; // Detiene el proceso si falta información
+            System.Diagnostics.Debug.WriteLine("Faltan campos obligatorios.");
+            return;
         }
 
         try
         {
-            // 1. GENERAR EL FOLIO CONSECUTIVO (Ej: OF-2026-0001)
-            string añoActual = DateTime.Now.Year.ToString();
+            // 1. Generar folio consecutivo
+            var añoActual = DateTime.Now.Year.ToString();
+            var cantidadActual = await _db.Oficios
+                                          .Where(o => o.FolioInterno.Contains(añoActual))
+                                          .CountAsync();
+            var nuevoFolio = $"OF-{añoActual}-{(cantidadActual + 1):D4}";
 
-            // Cuenta cuántos oficios hay de este año para sacar el siguiente número
-            int cantidadActual = await _db.Oficios
-                .Where(o => o.FolioInterno.Contains(añoActual))
-                .CountAsync();
+            // 2. Preparar ruta en servidor de red
+            var rutaServidorBase = @"\\10.2.1.92\FAA_divserv_admvos\APLICACIONES\GestionProyectos\OficiosPDF";
+            var nombreArchivo = $"{nuevoFolio}.pdf";
+            var rutaDestinoRed = Path.Combine(rutaServidorBase, nombreArchivo);
 
-            // :D4 rellena con ceros a la izquierda (ej. 1 se vuelve 0001)
-            string nuevoFolio = $"OF-{añoActual}-{(cantidadActual + 1):D4}";
-
-            // 2. PREPARAR LA RUTA EN EL SERVIDOR DE RED
-            // Agregamos una subcarpeta "OficiosPDF" para no mezclar los PDFs con el archivo .db
-            string rutaServidorBase = @"\\10.2.1.92\FAA_divserv_admvos\APLICACIONES\GestionProyectos\OficiosPDF";
-            string nombreArchivo = $"{nuevoFolio}.pdf";
-            string rutaDestinoRed = Path.Combine(rutaServidorBase, nombreArchivo);
-
-            // Si la carpeta "OficiosPDF" no existe en el servidor, la creamos
             if (!Directory.Exists(rutaServidorBase))
-            {
                 Directory.CreateDirectory(rutaServidorBase);
-            }
 
-            // 3. COPIAR EL PDF ESCANEADO AL SERVIDOR
+            // 3. Copiar PDF al servidor
             if (!string.IsNullOrEmpty(RutaArchivoLocal) && File.Exists(RutaArchivoLocal))
-            {
-                // Copia el archivo local a la red y reemplaza si por alguna razón ya existía
                 File.Copy(RutaArchivoLocal, rutaDestinoRed, overwrite: true);
-            }
             else
-            {
                 rutaDestinoRed = "Sin archivo adjunto";
-            }
 
-            // 4. CREAR EL REGISTRO PARA LA BASE DE DATOS
+            // 4. Persistir en base de datos
             var nuevoOficio = new Oficio
             {
                 FolioInterno = nuevoFolio,
-                FolioOriginal = this.FolioOriginal,
-                Remitente = this.Remitente,
-                Asunto = this.Asunto,
-                UsuarioAsignado = this.UsuarioAsignado,
+                FolioOriginal = FolioOriginal,
+                Remitente = Remitente,
+                Asunto = Asunto,
+                UsuarioAsignado = UsuarioAsignado,
                 RutaArchivoRed = rutaDestinoRed
             };
 
-            // 5. GUARDAR LOS CAMBIOS
             _db.Oficios.Add(nuevoOficio);
             await _db.SaveChangesAsync();
 
-            System.Diagnostics.Debug.WriteLine($"¡Éxito! Oficio {nuevoFolio} guardado en red.");
-
-            // Limpiar el formulario para capturar el siguiente
+            // 5. Feedback visual + limpiar formulario
+            UltimoFolioGenerado = nuevoFolio;
             LimpiarFormulario();
+
+            System.Diagnostics.Debug.WriteLine($"Oficio {nuevoFolio} guardado correctamente.");
         }
         catch (Exception ex)
         {

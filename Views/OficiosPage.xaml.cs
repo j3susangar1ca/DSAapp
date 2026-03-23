@@ -1,7 +1,8 @@
-using System;
-using Microsoft.UI.Xaml.Controls;
-using Windows.Storage.Pickers;
 using DSAapp.ViewModels;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage.Pickers;
 
 namespace DSAapp.Views;
 
@@ -14,39 +15,44 @@ public sealed partial class OficiosPage : Page
 
     public OficiosPage()
     {
-        // Conectamos el ViewModel usando la inyección de dependencias de Template Studio
         ViewModel = App.GetService<OficiosViewModel>();
-        this.InitializeComponent();
+        InitializeComponent();
     }
 
-    // Este método se ejecuta cuando el usuario hace clic en "Seleccionar PDF..."
-    private async void SeleccionarPdf_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    // ── Selector de archivo nativo ──
+    private async void SeleccionarPdf_Click(object sender, RoutedEventArgs e)
     {
-        // 1. Creamos el selector de archivos
         var picker = new FileOpenPicker();
-
-        // 2. TRUCO DE WINUI 3: Le decimos al selector a qué ventana pertenece
-        // (App.MainWindow es la ventana principal que Template Studio crea en App.xaml.cs)
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
-        // 3. Configuramos qué tipo de archivos permitimos
         picker.ViewMode = PickerViewMode.List;
         picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
         picker.FileTypeFilter.Add(".pdf");
 
-        // 4. Abrimos la ventana y esperamos a que el usuario elija un archivo
         var archivo = await picker.PickSingleFileAsync();
+        ViewModel.RutaArchivoLocal = archivo?.Path ?? string.Empty;
+    }
 
-        if (archivo != null)
+    // ── Drag & Drop ──
+    private void DropZone_DragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = DataPackageOperation.Copy;
+        e.DragUIOverride.Caption = "Soltar PDF aquí";
+        e.DragUIOverride.IsGlyphVisible = true;
+    }
+
+    private async void DropZone_Drop(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems))
         {
-            // Si eligió un archivo, guardamos la ruta en el ViewModel
-            ViewModel.RutaArchivoLocal = archivo.Path;
-        }
-        else
-        {
-            // Si canceló la ventana, limpiamos la ruta
-            ViewModel.RutaArchivoLocal = "Operación cancelada.";
+            var items = await e.DataView.GetStorageItemsAsync();
+            if (items.Count > 0 &&
+                items[0] is Windows.Storage.StorageFile file &&
+                file.FileType.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                ViewModel.RutaArchivoLocal = file.Path;
+            }
         }
     }
 }

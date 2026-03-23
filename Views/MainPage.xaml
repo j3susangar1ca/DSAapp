@@ -1,75 +1,248 @@
-﻿<Page
-    x:Class="DSAapp.Views.MainPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:toolkit="using:CommunityToolkit.WinUI.UI.Controls"
-    mc:Ignorable="d"
-    Background="Transparent">
+﻿<Page x:Class="DSAapp.Views.MainPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:toolkit="using:CommunityToolkit.WinUI.UI.Controls"
+      Background="Transparent">
 
-    <Grid Padding="24">
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <!-- ════════════════════════════════════════
+             ROW 0 — InfoBar para feedback de red
+             ════════════════════════════════════════ -->
+        <InfoBar Grid.Row="0"
+                 x:Name="NetworkInfoBar"
+                 IsOpen="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+                 Severity="Informational"
+                 Title="Sincronizando"
+                 Message="Cargando tareas desde el servidor de red..."
+                 IsClosable="False"
+                 Margin="0,0,0,12"/>
+
+        <!-- ════════════════════════════════════════
+             ROW 1 — CommandBar nativo
+             ════════════════════════════════════════ -->
+        <CommandBar Grid.Row="1"
+                    DefaultLabelPosition="Right"
+                    Background="Transparent"
+                    HorizontalAlignment="Left"
+                    Padding="0,0,0,16"
+                    OverflowButtonVisibility="Collapsed">
+
+            <AppBarButton x:Name="RefreshButton"
+                          Icon="Refresh"
+                          Label="Actualizar"
+                          Command="{x:Bind ViewModel.CargarTareasCommand}"
+                          ToolTipService.ToolTip="Recargar desde la base de datos (F5)"
+                          AutomationProperties.Name="Actualizar lista"/>
+
+            <AppBarSeparator/>
+
+            <AppBarButton Label="Nueva tarea"
+                          Command="{x:Bind ViewModel.AgregarTareaPruebaCommand}"
+                          AutomationProperties.Name="Agregar nueva tarea">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE710;"
+                              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                </AppBarButton.Icon>
+            </AppBarButton>
+
+        </CommandBar>
+
+        <!-- ════════════════════════════════════════
+             ROW 2 — Tarjetas KPI
+             ════════════════════════════════════════ -->
+        <Grid Grid.Row="2" ColumnSpacing="12" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="Panel Institucional" Style="{ThemeResource TitleTextBlockStyle}" FontWeight="SemiBold"/>
-                <TextBlock Text="Gestión de proyectos en red" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-            </StackPanel>
+            <!-- KPI: Total -->
+            <Border Grid.Column="0"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="TOTAL DE TAREAS"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   CharacterSpacing="50"/>
+                        <TextBlock Text="{x:Bind ViewModel.TotalTareas, Mode=OneWay}"
+                                   FontSize="36"
+                                   FontWeight="SemiBold"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                    </StackPanel>
+                    <Border Grid.Column="1"
+                            Width="40" Height="40"
+                            CornerRadius="20"
+                            Background="{ThemeResource SubtleFillColorTertiaryBrush}"
+                            VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE9D5;"
+                                  FontSize="18"
+                                  FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
 
-            <CommandBar Grid.Column="1" DefaultLabelPosition="Right" Background="Transparent" Padding="0">
-                <AppBarButton Icon="Refresh" Label="Actualizar Red" Command="{x:Bind ViewModel.CargarTareasCommand}" />
+            <!-- KPI: Completadas -->
+            <Border Grid.Column="1"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="COMPLETADAS"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   CharacterSpacing="50"/>
+                        <TextBlock Text="{x:Bind ViewModel.TareasCompletadas, Mode=OneWay}"
+                                   FontSize="36"
+                                   FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
+                    </StackPanel>
+                    <Border Grid.Column="1"
+                            Width="40" Height="40"
+                            CornerRadius="20"
+                            Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
+                            VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE73E;"
+                                  FontSize="18"
+                                  FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
 
-                <AppBarButton Icon="Add" 
-                              Label="Nueva Tarea de Prueba" 
-                              Command="{x:Bind ViewModel.AgregarTareaPruebaCommand}" 
-                              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-            </CommandBar>
+            <!-- KPI: Pendientes -->
+            <Border Grid.Column="2"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="PENDIENTES"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   CharacterSpacing="50"/>
+                        <TextBlock Text="{x:Bind ViewModel.TareasPendientes, Mode=OneWay}"
+                                   FontSize="36"
+                                   FontWeight="SemiBold"
+                                   Foreground="{ThemeResource SystemFillColorCautionBrush}"/>
+                    </StackPanel>
+                    <Border Grid.Column="1"
+                            Width="40" Height="40"
+                            CornerRadius="20"
+                            Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                            VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE916;"
+                                  FontSize="18"
+                                  FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
         </Grid>
 
-        <Border Grid.Row="1" 
+        <!-- ════════════════════════════════════════
+             ROW 3 — DataGrid en card
+             ════════════════════════════════════════ -->
+        <Border Grid.Row="3"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
-                CornerRadius="8"
-                Padding="1">
-
+                CornerRadius="8">
             <Grid>
-                <toolkit:DataGrid 
-                    ItemsSource="{x:Bind ViewModel.Tareas, Mode=OneWay}"
-                    AutoGenerateColumns="False"
-                    HeadersVisibility="Column"
-                    GridLinesVisibility="Horizontal"
-                    HorizontalGridLinesBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                    AlternatingRowBackground="{ThemeResource LayerOnAccentAcrylicFillColorDefaultBrush}"
-                    RowBackground="Transparent"
-                    SelectionMode="Extended"
-                    IsReadOnly="False"
-                    BorderThickness="0">
 
+                <!-- DataGrid -->
+                <toolkit:DataGrid ItemsSource="{x:Bind ViewModel.Tareas, Mode=OneWay}"
+                                  AutoGenerateColumns="False"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                  RowBackground="Transparent"
+                                  AlternatingRowBackground="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                  SelectionMode="Extended"
+                                  BorderThickness="0"
+                                  CanUserSortColumns="True"
+                                  CanUserReorderColumns="True"
+                                  CanUserResizeColumns="True">
                     <toolkit:DataGrid.Columns>
-                        <toolkit:DataGridCheckBoxColumn Header="Estado" Binding="{Binding EstaCompletada}" Width="SizeToHeader" />
-
-                        <toolkit:DataGridTextColumn Header="Título de Tarea" Binding="{Binding Titulo}" Width="*" IsReadOnly="False" />
-
-                        <toolkit:DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="1.5*" IsReadOnly="False"/>
-
-                        <toolkit:DataGridTextColumn Header="Creado Por" Binding="{Binding CreadoPor}" Width="Auto" IsReadOnly="True" />
-
-                        <toolkit:DataGridTextColumn Header="Fecha" Binding="{Binding FechaCreacion}" Width="Auto" IsReadOnly="True" />
+                        <toolkit:DataGridCheckBoxColumn Header="✓"
+                                                        Binding="{Binding EstaCompletada}"
+                                                        Width="56"/>
+                        <toolkit:DataGridTextColumn Header="Título"
+                                                    Binding="{Binding Titulo}"
+                                                    Width="*"/>
+                        <toolkit:DataGridTextColumn Header="Descripción"
+                                                    Binding="{Binding Descripcion}"
+                                                    Width="1.5*"/>
+                        <toolkit:DataGridTextColumn Header="Creado por"
+                                                    Binding="{Binding CreadoPor}"
+                                                    Width="Auto"
+                                                    IsReadOnly="True"/>
+                        <toolkit:DataGridTextColumn Header="Fecha"
+                                                    Binding="{Binding FechaCreacion}"
+                                                    Width="140"
+                                                    IsReadOnly="True"/>
                     </toolkit:DataGrid.Columns>
                 </toolkit:DataGrid>
 
-                <ProgressRing IsActive="False" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <!-- Estado vacío -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8"
+                            Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay,
+                                         Converter={StaticResource BoolToInverseVisibility}}">
+                    <FontIcon Glyph="&#xF16B;"
+                              FontSize="40"
+                              FontFamily="{StaticResource SymbolThemeFontFamily}"
+                              Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock Text="No hay tareas registradas"
+                               Style="{ThemeResource SubtitleTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Presiona 'Nueva tarea' en la barra de herramientas para comenzar."
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
             </Grid>
         </Border>
+
     </Grid>
 </Page>

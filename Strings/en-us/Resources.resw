@@ -103,6 +103,9 @@
   <data name="Shell_VistaWeb.Content" xml:space="preserve">
     <value>VistaWeb</value>
   </data>
+  <data name="Shell_Escaner.Content" xml:space="preserve">
+    <value>Escáner</value>
+  </data>
   <data name="Shell_CuadrículaDeDatos.Content" xml:space="preserve">
     <value>CuadrículaDeDatos</value>
   </data>

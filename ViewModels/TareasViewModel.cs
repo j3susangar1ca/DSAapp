@@ -12,19 +12,38 @@ public partial class TareasViewModel : ObservableObject
     private readonly AppDbContext _db;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalTareas))]
+    [NotifyPropertyChangedFor(nameof(TareasCompletadas))]
+    [NotifyPropertyChangedFor(nameof(TareasPendientes))]
     private ObservableCollection<Tarea> _tareas = new();
 
-    public TareasViewModel(AppDbContext db)
-    {
-        _db = db;
-    }
+    [ObservableProperty]
+    private bool _isBusy;
+
+    // ── Propiedades computadas para las tarjetas del dashboard ──
+    public int TotalTareas => Tareas.Count;
+    public int TareasCompletadas => Tareas.Count(t => t.EstaCompletada);
+    public int TareasPendientes => Tareas.Count(t => !t.EstaCompletada);
+
+    public TareasViewModel(AppDbContext db) => _db = db;
 
     [RelayCommand]
     public async Task CargarTareasAsync()
     {
-        var lista = await _db.Tareas.ToListAsync();
-        Tareas.Clear();
-        foreach (var t in lista) Tareas.Add(t);
+        IsBusy = true;
+        try
+        {
+            var lista = await _db.Tareas
+                                 .OrderByDescending(t => t.FechaCreacion)
+                                 .ToListAsync();
+            Tareas.Clear();
+            foreach (var t in lista) Tareas.Add(t);
+
+            OnPropertyChanged(nameof(TotalTareas));
+            OnPropertyChanged(nameof(TareasCompletadas));
+            OnPropertyChanged(nameof(TareasPendientes));
+        }
+        finally { IsBusy = false; }
     }
 
     [RelayCommand]
@@ -32,10 +51,9 @@ public partial class TareasViewModel : ObservableObject
     {
         var nueva = new Tarea
         {
-            Titulo = "Primera Tarea en Red",
-            Descripcion = "Prueba de escritura desde WinUI 3"
+            Titulo = "Nueva Tarea",
+            Descripcion = "Generada desde el Panel Institucional"
         };
-
         _db.Tareas.Add(nueva);
         await _db.SaveChangesAsync();
         await CargarTareasAsync();

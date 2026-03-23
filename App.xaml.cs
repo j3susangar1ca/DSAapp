@@ -70,6 +70,9 @@ public partial class App : Application
             // Core Services
             services.AddSingleton<ISampleDataService, SampleDataService>();
             services.AddSingleton<IFileService, FileService>();
+            // Scanner & OCR services
+            services.AddSingleton<IScannerService, ScannerService>();
+            services.AddSingleton<IOcrService, OcrService>();
 
             // ------------------------------------------------------------------
             // [NUEVO] SERVICIOS DE BASE DE DATOS (INYECCIÓN DE DEPENDENCIAS)
@@ -79,6 +82,10 @@ public partial class App : Application
             // Views and ViewModels
             // [NUEVO] Registramos tu TareasViewModel
             services.AddTransient<TareasViewModel>();
+
+            // Scanner viewmodel & page
+            services.AddTransient<EscanerViewModel>();
+            services.AddTransient<EscanerPage>();
 
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<SettingsPage>();

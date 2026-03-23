@@ -1,48 +1,331 @@
-<Page
-    x:Class="DSAapp.Views.OficiosPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+<Page x:Class="DSAapp.Views.OficiosPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="Transparent">
 
-    <ScrollViewer>
-        <StackPanel Padding="30" Spacing="20" MaxWidth="600" HorizontalAlignment="Left">
+    <Grid ColumnSpacing="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MaxWidth="580"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
 
-            <TextBlock Text="Registro de Nuevo Oficio" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="Llene los datos y adjunte el documento PDF escaneado." Foreground="Gray" />
+        <!-- ════════════════════════════════════════
+             COLUMNA 0 — Formulario principal
+             ════════════════════════════════════════ -->
+        <ScrollViewer Grid.Column="0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="16" Padding="0,4,0,40">
 
-            <TextBox Header="Remitente (Dependencia o Persona) *" 
-                     Text="{x:Bind ViewModel.Remitente, Mode=TwoWay}" 
-                     PlaceholderText="Ej. Dirección General" />
+                <!-- InfoBar de resultado -->
+                <InfoBar x:Name="ResultInfoBar"
+                         IsOpen="{x:Bind ViewModel.TieneUltimoFolio, Mode=OneWay}"
+                         Severity="Success"
+                         Title="Oficio registrado correctamente"
+                         Message="{x:Bind ViewModel.UltimoFolioGenerado, Mode=OneWay}"
+                         IsClosable="True"/>
 
-            <TextBox Header="Asunto *" 
-                     Text="{x:Bind ViewModel.Asunto, Mode=TwoWay}" 
-                     PlaceholderText="Breve descripción del oficio" />
+                <!-- ── Card: Datos del oficio ── -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24,20">
+                    <StackPanel Spacing="20">
 
-            <TextBox Header="Usuario Asignado (Turnado a) *" 
-                     Text="{x:Bind ViewModel.UsuarioAsignado, Mode=TwoWay}" 
-                     PlaceholderText="Nombre del responsable" />
+                        <!-- Encabezado de card -->
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon Glyph="&#xE8F1;"
+                                      FontSize="16"
+                                      FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Text="Información del documento"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
 
-            <TextBox Header="Folio Original (Opcional)" 
-                     Text="{x:Bind ViewModel.FolioOriginal, Mode=TwoWay}" 
-                     PlaceholderText="Número que trae el documento impreso" />
+                        <Rectangle Height="1"
+                                   Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                   Margin="0,-4,0,0"/>
 
-            <MenuFlyoutSeparator Margin="0,10" />
+                        <!-- Remitente -->
+                        <TextBox Header="Remitente *"
+                                 Text="{x:Bind ViewModel.Remitente, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="Dependencia o persona que envía"
+                                 MaxLength="200"
+                                 AutomationProperties.Name="Remitente del oficio"/>
 
-            <TextBlock Text="Documento Escaneado" FontWeight="SemiBold" />
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <Button Content="Seleccionar PDF..." Click="SeleccionarPdf_Click" />
-                <TextBlock Text="{x:Bind ViewModel.RutaArchivoLocal, Mode=OneWay}" 
-                           VerticalAlignment="Center" 
-                           Foreground="DarkBlue" 
-                           TextWrapping="Wrap" MaxWidth="400"/>
+                        <!-- Asunto -->
+                        <TextBox Header="Asunto *"
+                                 Text="{x:Bind ViewModel.Asunto, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="Descripción del tema"
+                                 MaxLength="300"
+                                 AutomationProperties.Name="Asunto del oficio"/>
+
+                        <!-- Dos campos en fila -->
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0"
+                                     Header="Turnado a *"
+                                     Text="{x:Bind ViewModel.UsuarioAsignado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PlaceholderText="Responsable"
+                                     MaxLength="100"
+                                     AutomationProperties.Name="Usuario asignado"/>
+
+                            <TextBox Grid.Column="1"
+                                     Header="Folio original"
+                                     Text="{x:Bind ViewModel.FolioOriginal, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PlaceholderText="Núm. impreso (opcional)"
+                                     MaxLength="50"
+                                     AutomationProperties.Name="Folio original"/>
+                        </Grid>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Card: Archivo adjunto ── -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24,20">
+                    <StackPanel Spacing="16">
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon Glyph="&#xEA11;"
+                                      FontSize="16"
+                                      FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Text="Documento escaneado (PDF)"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1"
+                                   Fill="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                   Margin="0,-4,0,0"/>
+
+                        <!-- Zona drag-drop -->
+                        <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1.5"
+                                CornerRadius="6"
+                                Padding="0,28"
+                                AllowDrop="True"
+                                DragOver="DropZone_DragOver"
+                                Drop="DropZone_Drop">
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="12">
+                                <FontIcon Glyph="&#xE8DE;"
+                                          FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                          FontSize="28"
+                                          Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                          HorizontalAlignment="Center"/>
+                                <TextBlock Text="Arrastra el PDF aquí"
+                                           Style="{ThemeResource BodyTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <Button Content="Seleccionar archivo..."
+                                        Click="SeleccionarPdf_Click"
+                                        HorizontalAlignment="Center"
+                                        AutomationProperties.Name="Examinar archivos PDF"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Chip de archivo seleccionado -->
+                        <Border Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
+                                BorderBrush="{ThemeResource SystemFillColorSuccessBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="12,8"
+                                Visibility="{x:Bind ViewModel.TieneArchivoSeleccionado, Mode=OneWay,
+                                             Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8A5;"
+                                          FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                          FontSize="14"
+                                          Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                          VerticalAlignment="Center"/>
+                                <TextBlock Text="{x:Bind ViewModel.NombreArchivoSeleccionado, Mode=OneWay}"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsTextSelectionEnabled="True"/>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Botón de acción principal ── -->
+                <Button Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Stretch"
+                        Command="{x:Bind ViewModel.GuardarOficioCommand}"
+                        Height="40"
+                        AutomationProperties.Name="Guardar oficio y generar folio">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE74E;"
+                                  FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  FontSize="16"
+                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Guardar y generar folio"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
             </StackPanel>
+        </ScrollViewer>
 
-            <Button Content="Guardar y Generar Folio Institucional" 
-                    Command="{x:Bind ViewModel.GuardarOficioCommand}" 
-                    Style="{StaticResource AccentButtonStyle}" 
-                    HorizontalAlignment="Stretch" 
-                    Margin="0,20,0,0" />
+        <!-- ════════════════════════════════════════
+             COLUMNA 1 — Panel lateral informativo
+             ════════════════════════════════════════ -->
+        <StackPanel Grid.Column="1" Spacing="12" Padding="0,4,0,0">
+
+            <!-- Card: Folio generado -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20,16"
+                    Visibility="{x:Bind ViewModel.TieneUltimoFolio, Mode=OneWay,
+                                 Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="ÚLTIMO FOLIO GENERADO"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               CharacterSpacing="50"/>
+                    <TextBlock Text="{x:Bind ViewModel.UltimoFolioGenerado, Mode=OneWay}"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                               IsTextSelectionEnabled="True"/>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE73E;"
+                                  FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  FontSize="12"
+                                  Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Registrado en la red"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Card: Instrucciones -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20,16">
+                <StackPanel Spacing="16">
+
+                    <TextBlock Text="Cómo funciona el registro"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"/>
+
+                    <Rectangle Height="1"
+                               Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+
+                    <!-- Paso 1 -->
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0"
+                                Width="28" Height="28"
+                                CornerRadius="14"
+                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="1"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Captura los datos"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       FontSize="13"/>
+                            <TextBlock Text="Remitente, asunto y usuario asignado son obligatorios."
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Paso 2 -->
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0"
+                                Width="28" Height="28"
+                                CornerRadius="14"
+                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="2"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Adjunta el PDF (opcional)"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       FontSize="13"/>
+                            <TextBlock Text="El archivo se copia a la ruta de red automáticamente."
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Paso 3 -->
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0"
+                                Width="28" Height="28"
+                                CornerRadius="14"
+                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="3"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Folio generado"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       FontSize="13"/>
+                            <TextBlock Text="El sistema asigna OF-YYYY-XXXX de forma consecutiva."
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
 
         </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </Page>
