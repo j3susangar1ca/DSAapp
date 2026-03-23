@@ -21,6 +21,7 @@ public class PageService : IPageService
         Configure<CuadrículaDeContenidoDetailViewModel, CuadrículaDeContenidoDetailPage>();
         Configure<DetallesDeListaViewModel, DetallesDeListaPage>();
         Configure<SettingsViewModel, SettingsPage>();
+        Configure<OficiosViewModel, OficiosPage>();
     }
 
     public Type GetPageType(string key)

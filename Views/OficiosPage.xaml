@@ -1,0 +1,48 @@
+<Page
+    x:Class="DSAapp.Views.OficiosPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer>
+        <StackPanel Padding="30" Spacing="20" MaxWidth="600" HorizontalAlignment="Left">
+
+            <TextBlock Text="Registro de Nuevo Oficio" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Llene los datos y adjunte el documento PDF escaneado." Foreground="Gray" />
+
+            <TextBox Header="Remitente (Dependencia o Persona) *" 
+                     Text="{x:Bind ViewModel.Remitente, Mode=TwoWay}" 
+                     PlaceholderText="Ej. Dirección General" />
+
+            <TextBox Header="Asunto *" 
+                     Text="{x:Bind ViewModel.Asunto, Mode=TwoWay}" 
+                     PlaceholderText="Breve descripción del oficio" />
+
+            <TextBox Header="Usuario Asignado (Turnado a) *" 
+                     Text="{x:Bind ViewModel.UsuarioAsignado, Mode=TwoWay}" 
+                     PlaceholderText="Nombre del responsable" />
+
+            <TextBox Header="Folio Original (Opcional)" 
+                     Text="{x:Bind ViewModel.FolioOriginal, Mode=TwoWay}" 
+                     PlaceholderText="Número que trae el documento impreso" />
+
+            <MenuFlyoutSeparator Margin="0,10" />
+
+            <TextBlock Text="Documento Escaneado" FontWeight="SemiBold" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="Seleccionar PDF..." Click="SeleccionarPdf_Click" />
+                <TextBlock Text="{x:Bind ViewModel.RutaArchivoLocal, Mode=OneWay}" 
+                           VerticalAlignment="Center" 
+                           Foreground="DarkBlue" 
+                           TextWrapping="Wrap" MaxWidth="400"/>
+            </StackPanel>
+
+            <Button Content="Guardar y Generar Folio Institucional" 
+                    Command="{x:Bind ViewModel.GuardarOficioCommand}" 
+                    Style="{StaticResource AccentButtonStyle}" 
+                    HorizontalAlignment="Stretch" 
+                    Margin="0,20,0,0" />
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>
