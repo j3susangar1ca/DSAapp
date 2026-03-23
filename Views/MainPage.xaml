@@ -1,0 +1,75 @@
+﻿<Page
+    x:Class="DSAapp.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.UI.Controls"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Panel Institucional" Style="{ThemeResource TitleTextBlockStyle}" FontWeight="SemiBold"/>
+                <TextBlock Text="Gestión de proyectos en red" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+
+            <CommandBar Grid.Column="1" DefaultLabelPosition="Right" Background="Transparent" Padding="0">
+                <AppBarButton Icon="Refresh" Label="Actualizar Red" Command="{x:Bind ViewModel.CargarTareasCommand}" />
+
+                <AppBarButton Icon="Add" 
+                              Label="Nueva Tarea de Prueba" 
+                              Command="{x:Bind ViewModel.AgregarTareaPruebaCommand}" 
+                              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+            </CommandBar>
+        </Grid>
+
+        <Border Grid.Row="1" 
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="1">
+
+            <Grid>
+                <toolkit:DataGrid 
+                    ItemsSource="{x:Bind ViewModel.Tareas, Mode=OneWay}"
+                    AutoGenerateColumns="False"
+                    HeadersVisibility="Column"
+                    GridLinesVisibility="Horizontal"
+                    HorizontalGridLinesBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                    AlternatingRowBackground="{ThemeResource LayerOnAccentAcrylicFillColorDefaultBrush}"
+                    RowBackground="Transparent"
+                    SelectionMode="Extended"
+                    IsReadOnly="False"
+                    BorderThickness="0">
+
+                    <toolkit:DataGrid.Columns>
+                        <toolkit:DataGridCheckBoxColumn Header="Estado" Binding="{Binding EstaCompletada}" Width="SizeToHeader" />
+
+                        <toolkit:DataGridTextColumn Header="Título de Tarea" Binding="{Binding Titulo}" Width="*" IsReadOnly="False" />
+
+                        <toolkit:DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="1.5*" IsReadOnly="False"/>
+
+                        <toolkit:DataGridTextColumn Header="Creado Por" Binding="{Binding CreadoPor}" Width="Auto" IsReadOnly="True" />
+
+                        <toolkit:DataGridTextColumn Header="Fecha" Binding="{Binding FechaCreacion}" Width="Auto" IsReadOnly="True" />
+                    </toolkit:DataGrid.Columns>
+                </toolkit:DataGrid>
+
+                <ProgressRing IsActive="False" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

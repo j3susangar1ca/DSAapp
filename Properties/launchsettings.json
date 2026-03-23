@@ -1,0 +1,10 @@
+﻿{
+    "profiles": {
+      "DSAapp (Unpackaged)": {
+        "commandName": "Project"
+      },
+      "DSAapp (Package)": {
+        "commandName": "MsixPackage"
+      }
+    }
+}
